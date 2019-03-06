@@ -1,0 +1,13 @@
+Documents:
+  - File
+  - Folder:
+    - Text
+  - Directory:
+    - Image
+Music:
+  - Playlist
+  - Favorites: []
+Images:
+  - Z
+  - B
+  - G
