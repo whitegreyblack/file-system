@@ -49,11 +49,11 @@ def load(filepath):
         data = f.read()
     return yaml.safe_load(data)
 
-def deserialize_as_list(structure, i=0, sublevel=1):
+def deserialize_as_list(structure, i=-1, sublevel=0):
     """Returns all nodes in a single list"""
     s, t = [], []
     for k, v in structure.items():
-        s.append((k, v, 0, i, '$'))
+        s.append((k, v, -1, i, '$'))
         i += 1
         while s:
             k, v, l, j, p = s.pop(0)
@@ -77,7 +77,8 @@ def parse(structure, strategy=deserialize_as_list):
     return strategy(structure)
 
 def serialize_list(data):
-    pass
+    d = dict()
+    print(data)
 
 def serialize_hash(data):
     pass

@@ -1,0 +1,34 @@
+# Definitions:
+ex: Structure.yaml
+{
+    # dict[str] = list[el:(str|dict)]
+    'Root': [
+        {
+            'Documents': [
+                'File', 
+                {
+                    'Folder': [
+                        'Text'
+                    ]
+                }, 
+                {
+                    'Directory': [
+                        'Image'
+                    ]
+                }
+            ]
+        }, 
+        {
+            'Music': [
+                'Playlist', 
+                {
+                    'Favorites': []
+                }
+            ]
+        }, 
+        {
+            'Images': ['Z', 'B', 'G']
+        }, 
+        'A'
+    ]
+}

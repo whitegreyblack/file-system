@@ -18,7 +18,6 @@ dirsize = 0
 dirindex = 0
 dir_print = False
 
-
 selected = None
 selected_string = "... Selected File: {}"
 
@@ -30,7 +29,8 @@ while 1:
     dirnames = list(map(lambda x: x.name.replace('/', ''), dirnodes))
     sorteddir = sorted(dirnodes, key=utils.dirsort)
     if dir_print:
-        print('..')
+        if dirindex > -1:
+            print('..')
         for n in sorteddir:
             print(n.name)
         dir_print = False
@@ -38,33 +38,38 @@ while 1:
         print(error_string)
         error = False
     if selected:
-        print(selected_string.format(selected.name))
+        selectedpath = 'data' + os.path.sep + selected.name
+        print(parser.read(selectedpath))
         selected = None
-
     try:
-        file_or_folder = input(">>> ")
+        user_input = input(">>> ")
     except (KeyboardInterrupt, EOFError):
         break
-
-    if file_or_folder not in dirnames:
-        if file_or_folder == '..' and dirindex != 0:
+    if user_input not in dirnames:
+        if user_input == '..' and dirindex > -1:
             parentnode = next(filter(lambda x: x.nid == dirnodes[0].pid, l))
             dirindex = parentnode.gid
-        elif file_or_folder == 'ls' or file_or_folder == 'dir':
+        elif user_input == 'ls' or user_input == 'dir':
             dir_print = True
+        elif user_input == 'save':
+            parser.serialize_list(l)
+        elif user_input == 'exit':
+            break
         else:
             error = True
     else:
         node = None
         folder = False
+        print(dirnodes)
         for i, n in enumerate(dirnodes):
-            if n.name.endswith('/'):
-                folder = True
-            if n.name.replace('/', '') == file_or_folder:
+            if n.name.replace('/', '') == user_input:
+                if n.name.endswith('/'):
+                    folder = True
                 node = n
                 break
+        print(folder)
         if folder:
-            dirindex = -1
+            dirindex = -2
             if node.cid:
                 dirindex = node.cid
         else:
