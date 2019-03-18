@@ -1,15 +1,14 @@
-Root:
-  - Documents:
-    - File
-    - Folder:
-      - Text
-    - Directory:
-      - Image
-  - Music:
-    - Playlist
-    - Favorites: []
-  - Images:
-    - Z
-    - B
-    - G
-  - A
+Documents:
+  - file: "data/file"
+  - Folder:
+    - text: "data/text"
+  - Directory:
+    - image: "data/image"
+Music:
+  - playlist: "data/playlist"
+  - Favorites: []
+Images:
+  - z: "data/z"
+  - b: "data/b"
+  - g: "data/g"
+a: "data/a"

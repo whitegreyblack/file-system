@@ -19,6 +19,7 @@ def main(tree, path):
     else:
         build_tree()
 
+
 def build_tree():
     filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
     if not os.path.exists(filepath):
@@ -28,6 +29,7 @@ def build_tree():
     l = parser.parse(parser.load(filepath))
     parser.print_inorder_indent_tree(l)
 
+
 def build_path():
     filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
     if not os.path.exists(filepath):
@@ -36,6 +38,25 @@ def build_path():
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
     parser.print_inorder_full_path(l)
+
+
+def format_file_or_folder(f, c):
+    if f.name.endswith('/'):
+        return f"{f.name:<30}{len(c)}"
+    else:
+        return f.name
+
+
+def list_directories(l, dirindex, sorteddir):
+    print_list = []
+    if dirindex > - 1:
+        print_list.append('..')
+    print_list.append(f"{'Folder':<30}#")
+    for n in sorteddir:
+        c = utils.dirfilter(l, n.cid)
+        print_list.append(format_file_or_folder(n, c))
+    print('\n'.join(print_list))
+
 
 def file_system():
     filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
@@ -49,6 +70,9 @@ def file_system():
     dirindex = 0
     dir_print = False
 
+    save = False
+    save_string = "... System saved to file"
+
     selected = None
     selected_string = "... Selected File: {}"
 
@@ -59,52 +83,74 @@ def file_system():
         dirnodes = utils.dirfilter(l, dirindex)
         dirnames = list(map(lambda x: x.name.replace('/', ''), dirnodes))
         sorteddir = sorted(dirnodes, key=utils.dirsort)
+
+        # print directory if last action was ls or dir
         if dir_print:
-            if dirindex > -1:
-                print('..')
-            for n in sorteddir:
-                print(n.name)
+            list_directories(l, dirindex, sorteddir)
             dir_print = False
+
+        # print error from last action
         if error:
             print(error_string)
             error = False
+
+        # print selected file from last action
         if selected:
             selectedpath = 'data' + os.path.sep + selected.name
             print(parser.read(selectedpath))
             selected = None
+
+        # save system and print confirmation
+        if save:
+            print(save_string)
+            save = False
+
+        # user input
         try:
             user_input = input(">>> ")
         except (KeyboardInterrupt, EOFError):
             break
-        if user_input not in dirnames:
-            if user_input == '..' and dirindex > -1:
+
+        # parse inputs and evaluate
+        cmd, *inputs = user_input.split(' ')
+        if not cmd or cmd == '':
+            continue
+        if cmd == 'ls' or cmd == 'dir':
+            dir_print = True
+        elif cmd == 'save':
+            save = True
+        elif cmd == 'exit':
+            break
+        elif cmd == 'cd':
+            i, *inputs = inputs
+            # going up system level
+            if i == '..' and dirindex > -1:
+                print('Dirindex: ', dirindex)
                 parentnode = next(filter(lambda x: x.nid == dirnodes[0].pid, l))
+                print('Parentnode', parentnode.gid)
                 dirindex = parentnode.gid
-            elif user_input == 'ls' or user_input == 'dir':
-                dir_print = True
-            elif user_input == 'save':
-                parser.serialize_list(l)
-            elif user_input == 'exit':
-                break
+            # going down system level
+            elif i in dirnames:
+                node = None
+                folder = False
+
+                # find exact file/directory to move into
+                for i, n in enumerate(dirnodes):
+                    if n.name.replace('/', '') == user_input:
+                        if n.name.endswith('/'):
+                            folder = True
+                        node = n
+                        break
+                if folder:
+                    dirindex = -2
+                    if node.cid:
+                        dirindex = node.cid
+                else:
+                    selected = node            
             else:
                 error = True
         else:
-            node = None
-            folder = False
-            print(dirnodes)
-            for i, n in enumerate(dirnodes):
-                if n.name.replace('/', '') == user_input:
-                    if n.name.endswith('/'):
-                        folder = True
-                    node = n
-                    break
-            print(folder)
-            if folder:
-                dirindex = -2
-                if node.cid:
-                    dirindex = node.cid
-            else:
-                selected = node
+            error = True
 
 if __name__ == '__main__':
     main()

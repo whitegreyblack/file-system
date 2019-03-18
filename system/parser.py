@@ -36,8 +36,6 @@ dict(list(dict(list())))
 # depending on how efficient the structures are. Need time testings to 
 # determine which of the three is the most efficient.
 """
-
-filepath = "data" + os.path.sep + "structure.yaml"
 node = namedtuple("Node", "nid gid pid cid name")
 
 def read(filepath):
@@ -73,6 +71,26 @@ def deserialize_as_list(structure, i=-1, sublevel=0):
                 t.append(node(j, l, p, None, k))
     return t
 
+def deserialize(structure):
+    s = [('Root', list(structure), 0, 0, '$')]
+    t = []
+    nid = 1
+    level = 1
+
+    # top level iteration
+    for name, children in structure.items():
+        s.append((name, children, level, nid, 0))
+        nid += 1
+        while s:
+            k, v, l, j, p = s.pop(0)
+            print('Deserialize', k, v, l, j, p)
+            if v is not None:
+                t.append(node(j, l, p, level, k+"/"))
+                print('Deserialize', v, type(v))
+            else:
+                t.append(node(j, l, p, None, k))
+    return t
+
 def parse(structure, strategy=deserialize_as_list):
     return strategy(structure)
 
@@ -103,21 +121,25 @@ def to_hashlistsys(t):
     return d, l
 
 if __name__ == "__main__":
+    filepath = "data" + os.path.sep + "structure.yaml"
+
     print("# Original File Contents")
-    print(read(filepath))
-    t = parse(load(filepath))
-
-    print("# Parsed File Contents - Indented Tree")
-    print("# NOTE: Ordered by name and folders before files")
+    # print(read(filepath))
+    t = parse(load(filepath), strategy=deserialize)
+    for i in t:
+        print('Node: ', i)
     print_inorder_indent_tree(t)
-    print()
+    # print("# Parsed File Contents - Indented Tree")
+    # print("# NOTE: Ordered by name and folders before files")
+    # print_inorder_indent_tree(t)
+    # print()
 
-    print("# Parsed File Contents - Full Path Tree")
-    print_inorder_full_path(t)
-    print()
+    # print("# Parsed File Contents - Full Path Tree")
+    # print_inorder_full_path(t)
+    # print()
 
-    print("# Parsed File Contents - Full Path Tree including folders")
-    print_inorder_full_path(t, include_dir=True)
+    # print("# Parsed File Contents - Full Path Tree including folders")
+    # print_inorder_full_path(t, include_dir=True)
 
     # d = to_hashsys(t)
     # print(d)

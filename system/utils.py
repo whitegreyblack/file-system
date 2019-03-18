@@ -49,14 +49,20 @@ def print_inorder(t):
         else:
             break
 
-def print_inorder_indent_tree(t, indent=0):
-    *ns, n = elements_indented(t, indent)
+def print_inorder_indent_tree(t, level=0):
+    *ns, n = elements_indented(t, level)
+    print('N/NS:', n, ns)
     while n:
-        n, i = n
-        print(f"{' ' * (i * 4)}{n.name}")
+        n, indent_level = n
+        print(f"{' ' * (indent_level * 4)}{n.name}")
+        print(n)
         if n.cid:
-            for e in elements(t, n.cid):
-                ns.append((e, i+1))
+            child_nodes = elements(t, n.cid)
+            # print(child_nodes)
+            for e in child_nodes:
+                print(e)
+            return
+                # ns.append((e, indent_level+1))
         n = None
         if ns:
             n = ns.pop()
