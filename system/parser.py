@@ -45,6 +45,7 @@ def read(filepath):
 def load(filepath):
     return yaml.safe_load(read(filepath))
 
+# todo: references to files
 def deserialize_as_list(structure):
     t = []
     # start with root node. all nodes will fall under this
@@ -117,6 +118,9 @@ if __name__ == "__main__":
 
     # print("# Parsed File Contents - Full Path Tree including folders")
     # print_inorder_full_path(t, include_dir=True)
+
+    print("# Print Inorder")
+    print_inorder(t)
 
     # d = to_hashsys(t)
     # print(d)

@@ -58,6 +58,14 @@ def list_directories(nodelist, dirindex, sorteddir):
     print('\n'.join(print_list))
 
 
+def save_system(nodes, string):
+    filepath = "." + os.path.sep + "saves" + os.path.sep + "save.yaml"
+    utils.check_save_directory(filepath)
+    data = utils.format_nodes_for_write(nodes)
+    utils.write(filepath, data)
+    print(string)
+
+
 def file_system():
     filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
     if not os.path.exists(filepath):
@@ -105,7 +113,7 @@ def file_system():
 
         # save system and print confirmation
         if save:
-            print(save_string)
+            save_system(l, save_string)
             save = False
 
         # user input

@@ -2,6 +2,7 @@
 """
 Holds common functions used throughout the systems package.
 """
+import os
 import random
 from collections import namedtuple
 
@@ -43,6 +44,33 @@ def elements_indented(t, i=0, tab=0):
 def elements_full_path(t, i=0, path=""):
     return [(e, path) for e in elements(t, i)]
 
+def check_save_directory(filepath):
+    pardir = os.path.dirname(filepath)
+    if not os.path.exists(pardir):
+        os.mkdir(pardir)
+
+def write(filepath, data):
+    with open(filepath, "w+") as f:
+        f.writelines(data)
+
+def format_nodes_for_write(nodes):
+    print(print_inorder_indent_tree(nodes, 1))
+    return print_inorder_indent_tree(nodes, 1)
+    # *ns, n = elements(nodes, 1)
+    # data = dict()
+    # while n:
+    #     print(el_repr(n))
+    #     if n.cid:
+    #         data[n.name] = dict()
+    #         for e in elements(nodes, n.cid):
+    #             ns.append(e)
+    #     else:
+    #         data[n.name] = ""
+    #     if ns:
+    #         n = ns.pop()
+    #     else:
+    #         break
+
 def print_inorder(t):
     *ns, n = elements(t, 0)
     while n:
@@ -70,6 +98,7 @@ def print_inorder_indent_tree(t, level=0):
         if ns:
             n = ns.pop()
     print('\n'.join(nodes))
+    return '\n'.join(nodes)
 
 def print_inorder_full_path(t, path="~/", include_dir=True):
     *ns, n = elements_full_path(t, path=path)
@@ -86,3 +115,4 @@ def print_inorder_full_path(t, path="~/", include_dir=True):
         if ns:
             n = ns.pop()
     print('\n'.join(nodes))
+    return '\n'.join(nodes)
