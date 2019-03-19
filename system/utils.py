@@ -16,8 +16,16 @@ class Node(object):
 node = namedtuple("Node", "nid gid pid cid name")
 dirsort = lambda x: (x.cid is None, x.name)
 dirfilter = lambda l, i: list(filter(lambda x: x.gid == i, l))
+
 random_folder_name = lambda: chr(65 + random.randint(0, 25))
 random_file_name = lambda: chr(97 + random.randint(0, 25))
+
+def dirsum(nodelist, groupid):
+    c = dirfilter(nodelist, groupid)
+    count = len(c)
+    for n in c:
+        count += dirsum(nodelist, n.cid)
+    return count
 
 def els_repr(ns):
     return [el_repr(n) for n in ns]
@@ -37,7 +45,6 @@ def elements_full_path(t, i=0, path=""):
 
 def print_inorder(t):
     *ns, n = elements(t, 0)
-    print('n g c')
     while n:
         print(el_repr(n))
         if n.cid:
@@ -50,17 +57,11 @@ def print_inorder(t):
             break
 
 def print_inorder_indent_tree(t, level=0):
-    """
-    Node(nid=0, gid=0, pid='$', cid=1, name='Root')
-    Node(nid=1, gid=1, pid=0, cid=2, name='Documents')
-    Node(nid=3, gid=1, pid=0, cid=4, name='Images')
-    Node(nid=2, gid=1, pid=0, cid=3, name='Music')
-    Node(nid=4, gid=1, pid=0, cid='$', name='a')
-    """
     *ns, n = elements_indented(t, level)
+    nodes = []
     while n:
         n, indent_level = n
-        print(f"{' ' * (indent_level * 4)}{n.name}")
+        nodes.append(f"{' ' * (indent_level * 4)}{n.name}")
         if n.cid:
             child_nodes = elements(t, n.cid)
             for e in child_nodes:
@@ -68,17 +69,20 @@ def print_inorder_indent_tree(t, level=0):
         n = None
         if ns:
             n = ns.pop()
+    print('\n'.join(nodes))
 
 def print_inorder_full_path(t, path="~/", include_dir=True):
     *ns, n = elements_full_path(t, path=path)
+    nodes = []
     while n:
         n, p = n
         if not n.cid:
-            print(p+n.name)
+            nodes.append(p+n.name)
         else:
-            print(f"{p if include_dir else ''}{n.name.lower()}")
+            nodes.append(f"{p if include_dir else ''}{n.name.lower()}")
             for e in elements(t, n.cid):
-                ns.append((e, p+n.name+"/"))
+                ns.append((e, p + n.name.lower() + "/"))
         n = None
         if ns:
             n = ns.pop()
+    print('\n'.join(nodes))

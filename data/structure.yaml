@@ -1,16 +1,16 @@
 # 14 items (15 including root)
 # 6 folders / 8 files / 6 gids?
 Documents:
-  file: "data/file"
-  Folder:
-    text: "data/text"
-  Directory:
-    image: "data/image"
-Music:
-  playlist: "data/playlist"
-  Favorites: []
-Images:
-  z: "data/z"
-  b: "data/b"
-  g: "data/g"
-a: "data/a"
+#   file: "data/file"
+#   Folder:
+#     text: "data/text"
+#   Directory:
+#     image: "data/image"
+# Music:
+#   playlist: "data/playlist"
+#   Favorites:
+# Images:
+#   z: "data/z"
+#   b: "data/b"
+#   g: "data/g"
+# a: "data/a"

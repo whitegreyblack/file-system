@@ -53,16 +53,16 @@ def deserialize_as_list(structure):
     level = 1
 
     while s:
-        name, children, gid, nid, pid = s.pop(0)
+        cid = level
+        n = s.pop(0)
+        name, children, gid, nid, pid = n
         if isinstance(children, str):
-            "nid gid pid cid name"
-            t.append(node(nid, gid, pid, '$', name))
+            cid = '$'
         elif isinstance(children, dict):
-            "nid gid pid cid name"
-            t.append(node(nid, gid, pid, level, name))
             for childname, subchildren in children.items():
                 s.append((childname, subchildren, level, nodeid, gid))
                 nodeid += 1
+        t.append(node(nid, gid, pid, cid, name))
         level += 1
     return t
 
@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     # print("# Original File Contents")
     # print(read(filepath))
-    t = parse(load(filepath), strategy=deserialize)
+    t = parse(load(filepath))
     print("# Node list: ")
     for i in t:
         print(i)

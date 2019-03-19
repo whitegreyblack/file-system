@@ -41,8 +41,8 @@ def build_path():
 
 
 def format_file_or_folder(f, c):
-    if f.name.endswith('/'):
-        return f"{f.name.lower():<30}{len(c)}"
+    if f.cid != '$':
+        return f"{f.name.lower()+'/':<30}{c}"
     else:
         return f.name.lower()
 
@@ -53,7 +53,7 @@ def list_directories(nodelist, dirindex, sorteddir):
     if dirindex > 0:
         print_list.append('..')
     for n in sorteddir:
-        c = utils.dirfilter(nodelist, n.cid)
+        c = utils.dirsum(nodelist, n.cid)
         print_list.append(format_file_or_folder(n, c))
     print('\n'.join(print_list))
 
@@ -65,9 +65,9 @@ def file_system():
 
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
-    print(l)
 
     dirsize = 0
+    oldindex = 0
     dirindex = 0
     dir_print = False
 
@@ -77,8 +77,10 @@ def file_system():
     selected = None
     selected_string = "... Selected File: {}"
 
-    error = False
-    error_string = "... Folder or File name not found"
+    error = None
+    error_cmd_not_valid = "... Invalid command. Please try again."
+    error_dir_not_valid = "... Cannot change directory into '{}'"
+    error_dir_not_found = "... Folder or file name not found"
 
     while 1:
         dirnodes = utils.dirfilter(l, dirindex)
@@ -92,8 +94,8 @@ def file_system():
 
         # print error from last action
         if error:
-            print(error_string)
-            error = False
+            print(error)
+            error = None
 
         # print selected file from last action
         if selected:
@@ -114,8 +116,12 @@ def file_system():
 
         # parse inputs and evaluate
         cmd, *inputs = user_input.split(' ')
+        
+        # detected no input/empty input. Continue waiting for input
         if not cmd or cmd == '':
             continue
+
+        # for all other inputs
         if cmd == 'ls' or cmd == 'dir':
             dir_print = True
         elif cmd == 'save':
@@ -125,33 +131,32 @@ def file_system():
         elif cmd == 'cd':
             i, *inputs = inputs
             # going up system level
-            if i == '..' and dirindex > -1:
-                print('Dirindex: ', dirindex)
-                parentnode = next(filter(lambda x: x.nid == dirnodes[0].pid, l))
-                print('Parentnode', parentnode.gid)
-                dirindex = parentnode.gid
+            if i == '..' and dirindex > 0:
+                # in an empty folder, no references in directory node list
+                dirindex = oldindex
             # going down system level
-            elif i in dirnames:
+            elif i.lower() in set(x.lower() for x in dirnames):
                 node = None
                 folder = False
 
                 # find exact file/directory to move into
-                for i, n in enumerate(dirnodes):
-                    if n.name.replace('/', '') == user_input:
-                        if n.name.endswith('/'):
+                for n in dirnodes:
+                    if i.lower() == n.name.lower():
+                        if n.cid != '$':
                             folder = True
                         node = n
                         break
                 if folder:
-                    dirindex = -2
-                    if node.cid:
-                        dirindex = node.cid
+                    print(node.cid)
+                    oldindex = dirindex
+                    dirindex = node.cid
                 else:
-                    selected = node            
+                    error = error_dir_not_valid.format(node.name)
+                    # selected = node
             else:
-                error = True
+                error = error_dir_not_found
         else:
-            error = True
+            error = error_cmd_not_valid
 
 if __name__ == '__main__':
     main()
