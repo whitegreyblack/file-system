@@ -42,18 +42,18 @@ def build_path():
 
 def format_file_or_folder(f, c):
     if f.name.endswith('/'):
-        return f"{f.name:<30}{len(c)}"
+        return f"{f.name.lower():<30}{len(c)}"
     else:
-        return f.name
+        return f.name.lower()
 
 
-def list_directories(l, dirindex, sorteddir):
+def list_directories(nodelist, dirindex, sorteddir):
     print_list = []
-    if dirindex > - 1:
+    # print_list.append(f"{'[~/root/]:':<30}#")
+    if dirindex > 0:
         print_list.append('..')
-    print_list.append(f"{'Folder':<30}#")
     for n in sorteddir:
-        c = utils.dirfilter(l, n.cid)
+        c = utils.dirfilter(nodelist, n.cid)
         print_list.append(format_file_or_folder(n, c))
     print('\n'.join(print_list))
 
@@ -65,6 +65,7 @@ def file_system():
 
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
+    print(l)
 
     dirsize = 0
     dirindex = 0

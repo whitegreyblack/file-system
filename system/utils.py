@@ -50,34 +50,35 @@ def print_inorder(t):
             break
 
 def print_inorder_indent_tree(t, level=0):
+    """
+    Node(nid=0, gid=0, pid='$', cid=1, name='Root')
+    Node(nid=1, gid=1, pid=0, cid=2, name='Documents')
+    Node(nid=3, gid=1, pid=0, cid=4, name='Images')
+    Node(nid=2, gid=1, pid=0, cid=3, name='Music')
+    Node(nid=4, gid=1, pid=0, cid='$', name='a')
+    """
     *ns, n = elements_indented(t, level)
-    print('N/NS:', n, ns)
     while n:
         n, indent_level = n
         print(f"{' ' * (indent_level * 4)}{n.name}")
-        print(n)
         if n.cid:
             child_nodes = elements(t, n.cid)
-            # print(child_nodes)
             for e in child_nodes:
-                print(e)
-            return
-                # ns.append((e, indent_level+1))
+                ns.append((e, indent_level+1))
         n = None
         if ns:
             n = ns.pop()
 
-def print_inorder_full_path(t, path="", include_dir=False):
-    *ns, n = elements_full_path(t)
+def print_inorder_full_path(t, path="~/", include_dir=True):
+    *ns, n = elements_full_path(t, path=path)
     while n:
         n, p = n
         if not n.cid:
             print(p+n.name)
         else:
-            if include_dir:
-                print(p+n.name)
+            print(f"{p if include_dir else ''}{n.name.lower()}")
             for e in elements(t, n.cid):
-                ns.append((e, p+n.name))            
+                ns.append((e, p+n.name+"/"))
         n = None
         if ns:
             n = ns.pop()

@@ -22,7 +22,7 @@ dict(list(dict(list())))
 
 {
     'Documents': [
-        'File', 
+        { 'File': 'data/file' }, 
         { 'Folder': [ 'Text' ] }, 
         { 'Directory': [ 'Image' ] }
     ], 
@@ -43,52 +43,27 @@ def read(filepath):
         return f.read()
 
 def load(filepath):
-    with open(filepath, 'r') as f:
-        data = f.read()
-    return yaml.safe_load(data)
+    return yaml.safe_load(read(filepath))
 
-def deserialize_as_list(structure, i=-1, sublevel=0):
-    """Returns all nodes in a single list"""
-    s, t = [], []
-    for k, v in structure.items():
-        s.append((k, v, -1, i, '$'))
-        i += 1
-        while s:
-            k, v, l, j, p = s.pop(0)
-            if v is not None:
-                t.append(node(j, l, p, sublevel, k+"/"))
-                if isinstance(v, list):
-                    for f in v:
-                        if isinstance(f, str):
-                            s.append((f, None, sublevel, i, j))
-                            i += 1
-                        else:
-                            for fk, fv in f.items():
-                                s.append((fk, fv, sublevel, i, j))
-                                i += 1
-                sublevel += 1
-            else:
-                t.append(node(j, l, p, None, k))
-    return t
-
-def deserialize(structure):
-    s = [('Root', list(structure), 0, 0, '$')]
+def deserialize_as_list(structure):
     t = []
-    nid = 1
+    # start with root node. all nodes will fall under this
+    s = [('Root', structure, 0, 0, '$')]
+    nodeid = 1
     level = 1
 
-    # top level iteration
-    for name, children in structure.items():
-        s.append((name, children, level, nid, 0))
-        nid += 1
-        while s:
-            k, v, l, j, p = s.pop(0)
-            print('Deserialize', k, v, l, j, p)
-            if v is not None:
-                t.append(node(j, l, p, level, k+"/"))
-                print('Deserialize', v, type(v))
-            else:
-                t.append(node(j, l, p, None, k))
+    while s:
+        name, children, gid, nid, pid = s.pop(0)
+        if isinstance(children, str):
+            "nid gid pid cid name"
+            t.append(node(nid, gid, pid, '$', name))
+        elif isinstance(children, dict):
+            "nid gid pid cid name"
+            t.append(node(nid, gid, pid, level, name))
+            for childname, subchildren in children.items():
+                s.append((childname, subchildren, level, nodeid, gid))
+                nodeid += 1
+        level += 1
     return t
 
 def parse(structure, strategy=deserialize_as_list):
@@ -123,20 +98,22 @@ def to_hashlistsys(t):
 if __name__ == "__main__":
     filepath = "data" + os.path.sep + "structure.yaml"
 
-    print("# Original File Contents")
+    # print("# Original File Contents")
     # print(read(filepath))
     t = parse(load(filepath), strategy=deserialize)
+    print("# Node list: ")
     for i in t:
-        print('Node: ', i)
-    print_inorder_indent_tree(t)
-    # print("# Parsed File Contents - Indented Tree")
-    # print("# NOTE: Ordered by name and folders before files")
-    # print_inorder_indent_tree(t)
-    # print()
+        print(i)
+    print()
 
-    # print("# Parsed File Contents - Full Path Tree")
-    # print_inorder_full_path(t)
-    # print()
+    print("# Parsed File Contents - Indented Tree")
+    print("# NOTE: Ordered by name and folders before files")
+    print_inorder_indent_tree(t)
+    print()
+
+    print("# Parsed File Contents - Full Path Tree")
+    print_inorder_full_path(t)
+    print()
 
     # print("# Parsed File Contents - Full Path Tree including folders")
     # print_inorder_full_path(t, include_dir=True)
