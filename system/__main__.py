@@ -58,12 +58,11 @@ def list_directories(nodelist, dirindex, sorteddir):
     print('\n'.join(print_list))
 
 
-def save_system(nodes, string):
+def save_system(nodes):
     filepath = "." + os.path.sep + "saves" + os.path.sep + "save.yaml"
     utils.check_save_directory(filepath)
     data = utils.format_nodes_for_write(nodes)
     utils.write(filepath, data)
-    print(string)
 
 
 def file_system():
@@ -77,44 +76,33 @@ def file_system():
     dirsize = 0
     oldindex = 0
     dirindex = 0
-    dir_print = False
 
-    save = False
+    output = None
+
+    help_string = """
+ls/dir : outputs file and folder info in directory
+save   : exports current system to yaml format
+cat    : outputs selected file contents (TODO: write input to file using '>')
+cd     : changes current directory to input directory
+exit   : exit program
+pwd    : output absolute path
+"""[1:]
+
     save_string = "... System saved to file"
-
-    selected = None
-    selected_string = "... Selected File: {}"
-
-    error = None
     error_cmd_not_valid = "... Invalid command. Please try again."
     error_dir_not_valid = "... Cannot change directory into '{}'"
     error_dir_not_found = "... Folder or file name not found"
+    error_cat_not_valid = "... Could not read '{}'. '{}' is a directory."
 
     while 1:
         dirnodes = utils.dirfilter(l, dirindex)
         dirnames = list(map(lambda x: x.name.replace('/', ''), dirnodes))
         sorteddir = sorted(dirnodes, key=utils.dirsort)
 
-        # print directory if last action was ls or dir
-        if dir_print:
-            list_directories(l, dirindex, sorteddir)
-            dir_print = False
-
-        # print error from last action
-        if error:
-            print(error)
-            error = None
-
-        # print selected file from last action
-        if selected:
-            selectedpath = 'data' + os.path.sep + selected.name
-            print(parser.read(selectedpath))
-            selected = None
-
-        # save system and print confirmation
-        if save:
-            save_system(l, save_string)
-            save = False
+        # any output is printed here
+        if output:
+            print(output)
+            output = None
 
         # user input
         try:
@@ -122,20 +110,36 @@ def file_system():
         except (KeyboardInterrupt, EOFError):
             break
 
-        # parse inputs and evaluate
+        # parse inputs and evaluate (TODO: use lexical tree for quotation inputs)
         cmd, *inputs = user_input.split(' ')
-        
+
         # detected no input/empty input. Continue waiting for input
         if not cmd or cmd == '':
             continue
 
         # for all other inputs
-        if cmd == 'ls' or cmd == 'dir':
-            dir_print = True
+        if cmd in ('ls', 'dir'):
+            output = list_directories(l, dirindex, sorteddir)
+        elif cmd == ('?', 'help'):
+            output = help_string
         elif cmd == 'save':
-            save = True
+            save_system(l)
+            output = save_string
         elif cmd == 'exit':
             break
+        elif cmd == 'cat':
+            i, *inputs = inputs
+            if i in set(x.lower() for x in dirnames):
+                for n in dirnodes:
+                    if i.lower() == n.name.lower():
+                        if n.cid != '$':
+                            folder = True
+                        node = n
+                        break
+                if not folder:
+                    output = read_file_contents()
+                else:
+                    output = error_cat_not_valid.format(n.name, n.name)
         elif cmd == 'cd':
             i, *inputs = inputs
             # going up system level
@@ -155,16 +159,17 @@ def file_system():
                         node = n
                         break
                 if folder:
-                    print(node.cid)
                     oldindex = dirindex
                     dirindex = node.cid
                 else:
-                    error = error_dir_not_valid.format(node.name)
+                    output = error_dir_not_valid.format(node.name)
                     # selected = node
             else:
-                error = error_dir_not_found
+                output = error_dir_not_found
+        elif cmd == 'pwd':
+            output = 'Not yet implemented. Print current working directory.'
         else:
-            error = error_cmd_not_valid
+            output = error_cmd_not_valid
 
 if __name__ == '__main__':
     main()
