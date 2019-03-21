@@ -40,11 +40,35 @@ def build_path():
     parser.print_inorder_full_path(l)
 
 
+def convert_to_specific_os(ref):
+    return ref.replace('/', os.path.sep)
+
+
+def file_size(ref):
+    pwd = os.path.abspath(convert_to_specific_os(ref))
+    print(pwd)
+    size = os.path.getsize(pwd)
+    return f"{f'{size} B':>6}"
+
+
 def format_file_or_folder(f, c):
     if f.cid != '$':
-        return f"{f.name.lower()+'/':<30}{c}"
+        return f"{f.name.lower():<15}{c:<3}"
     else:
-        return f.name.lower()
+        return f"{f.name.lower():<10}" + str(file_size(f.ref))
+
+
+def build_absolute_path(l, nid):
+    path = ""
+    n, *_ = utils.findnode(l, nid)
+    if not n:
+        raise Exception(f"Could not find node with nid {n.nid}")
+    path = f"{n.name}/"
+    while n.pid != '$':
+        n, *_ = utils.findnode(l, n.pid)
+        if n:
+            path = f"{n.name}/" + path
+    return "~/" + path.lower()
 
 
 def list_directories(nodelist, dirindex, sorteddir):
@@ -96,6 +120,7 @@ pwd    : output absolute path
 
     while 1:
         dirnodes = utils.dirfilter(l, dirindex)
+        parnode, *_ = utils.findnode(l, dirnodes[0].nid)
         dirnames = list(map(lambda x: x.name.replace('/', ''), dirnodes))
         sorteddir = sorted(dirnodes, key=utils.dirsort)
 
@@ -106,7 +131,7 @@ pwd    : output absolute path
 
         # user input
         try:
-            user_input = input(">>> ")
+            user_input = input(f">>> ")
         except (KeyboardInterrupt, EOFError):
             break
 
@@ -120,7 +145,7 @@ pwd    : output absolute path
         # for all other inputs
         if cmd in ('ls', 'dir'):
             output = list_directories(l, dirindex, sorteddir)
-        elif cmd == ('?', 'help'):
+        elif cmd in ('?', 'help'):
             output = help_string
         elif cmd == 'save':
             save_system(l)
@@ -142,10 +167,12 @@ pwd    : output absolute path
                     output = error_cat_not_valid.format(n.name, n.name)
         elif cmd == 'cd':
             i, *inputs = inputs
+            if i == '~':
+                oldindex, dirindex = dirindex, 0
             # going up system level
-            if i == '..' and dirindex > 0:
+            elif i == '..' and dirindex > 0:
                 # in an empty folder, no references in directory node list
-                dirindex = oldindex
+                oldindex, dirindex = dirindex, parnode.gid
             # going down system level
             elif i.lower() in set(x.lower() for x in dirnames):
                 node = None
@@ -159,15 +186,13 @@ pwd    : output absolute path
                         node = n
                         break
                 if folder:
-                    oldindex = dirindex
-                    dirindex = node.cid
+                    oldindex, dirindex = dirindex, node.cid
                 else:
                     output = error_dir_not_valid.format(node.name)
-                    # selected = node
             else:
                 output = error_dir_not_found
         elif cmd == 'pwd':
-            output = 'Not yet implemented. Print current working directory.'
+            output = build_absolute_path(l, dirindex)
         else:
             output = error_cmd_not_valid
 

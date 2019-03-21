@@ -48,10 +48,11 @@ def load(filepath):
 # todo: references to files
 def deserialize_as_list(structure):
     t = []
+    level = 1
+    nodeid = 1
     # start with root node. all nodes will fall under this
     s = [('Root', structure, 0, 0, '$')]
-    nodeid = 1
-    level = 1
+    node = namedtuple("Node", "nid gid pid cid name")
 
     while s:
         cid = level
@@ -64,6 +65,30 @@ def deserialize_as_list(structure):
                 s.append((childname, subchildren, level, nodeid, gid))
                 nodeid += 1
         t.append(node(nid, gid, pid, cid, name))
+        level += 1
+    return t
+
+def deserialize_as_list(structure):
+    t = []
+    level = 1
+    nodeid = 1
+    # start with root node. all nodes will fall under this
+    s = [('Root', structure, 0, 0, '$', '$')]
+    node = namedtuple("Node", "nid gid pid cid name ref")
+
+    while s:
+        ref = '$'
+        cid = level
+        n = s.pop(0)
+        name, children, gid, nid, pid, ref = n
+        if isinstance(children, str):
+            cid = '$'
+            ref = children
+        elif isinstance(children, dict):
+            for childname, subchildren in children.items():
+                s.append((childname, subchildren, level, nodeid, gid, '$'))
+                nodeid += 1
+        t.append(node(nid, gid, pid, cid, name, ref))
         level += 1
     return t
 
@@ -115,7 +140,9 @@ if __name__ == "__main__":
     print("# Parsed File Contents - Full Path Tree")
     print_inorder_full_path(t)
     print()
-
+    print("# Parsed File Contents - Full Path Tree with Refs")
+    print_inorder_full_path(t, include_ref=True)
+    print()
     # print("# Parsed File Contents - Full Path Tree including folders")
     # print_inorder_full_path(t, include_dir=True)
 
