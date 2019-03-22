@@ -172,6 +172,7 @@ pwd    : output absolute path
             # going up system level
             elif i == '..' and dirindex > 0:
                 # in an empty folder, no references in directory node list
+                print(oldindex, dirindex, '<=', dirindex, parnode.gid)
                 oldindex, dirindex = dirindex, parnode.gid
             # going down system level
             elif i.lower() in set(x.lower() for x in dirnames):
@@ -186,6 +187,7 @@ pwd    : output absolute path
                         node = n
                         break
                 if folder:
+                    print(oldindex, dirindex, '<=', dirindex, node.cid)
                     oldindex, dirindex = dirindex, node.cid
                 else:
                     output = error_dir_not_valid.format(node.name)
