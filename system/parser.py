@@ -68,7 +68,7 @@ def deserialize_as_list(structure):
         level += 1
     return t
 
-def deserialize_as_list(structure):
+def deserialize_copy(structure):
     t = []
     level = 1
     nodeid = 1
@@ -88,11 +88,11 @@ def deserialize_as_list(structure):
             for cname, cchildren in children.items():
                 s.append((cname, cchildren, level, nodeid, gid, f"{path}{name}/", '$'))
                 nodeid += 1
+            level += 1
         t.append(node(nid, gid, pid, cid, name, path, ref))
-        level += 1
     return t
 
-def parse(structure, strategy=deserialize_as_list):
+def parse(structure, strategy=deserialize_copy):
     return strategy(structure)
 
 def serialize_list(data):

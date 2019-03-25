@@ -5,6 +5,7 @@ Takes in a list of file nodes and creates a tree.
 import system.utils as utils
 
 class Directory(object):
+    dirid = 1
     def __init__(self, gid, pid):
         self.group_directory_id = gid
         self.parent_directory_id = pid
@@ -83,19 +84,24 @@ class System(object):
                             break
                     if current.group_directory_id == node.gid:
                         stop_iter = True
-                print(current.group_directory_id)
+                print('stop loop:', current.group_directory_id)
                 nodeobj.group_directory = current
                 current.files_and_folders.append(nodeobj)
 
     def traversal(self):
         node = self.rootdir
         print('traversal')
-        nodes = [x for x in node.files_and_folders]
+        nodes = [(node.group_directory_id, x) for x in node.files_and_folders]
         while nodes:
             n, *nodes = nodes
-            print(n.name)
+            gid, n = n
+            print(gid, n.name)
             if isinstance(n, Folder):
-                nodes = [x for x in n.child_directory.files_and_folders] + nodes
+                child_dir = n.child_directory
+                nodes = [(child_dir.group_directory_id, x) for x in child_dir.files_and_folders] + nodes
+
+    def find(self, path):
+        pass
 
     def size(self):
         return get_number_of_objects_in_dir()
@@ -107,5 +113,9 @@ if __name__ == "__main__":
 
     filepath = "." + os.path.sep + "data" + os.path.sep + "mini.yaml"
     l = parser.parse(parser.load(filepath))
+    print('loop start')
+    for n in l:
+        print(n)
+    print('loop end')
     s = System(l)
     s.traversal()
