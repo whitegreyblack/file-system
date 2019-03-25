@@ -39,7 +39,7 @@ def els_repr(ns):
 
 
 def el_repr(n):
-    return f"{n.nid} {n.gid} {n.cid if n.cid else '|'} {n.name}"
+    return f"{n.nid} {n.gid} {n.pid if n.cid else '$'} {n.cid if n.cid else '$'} {n.name}"
 
 
 def elements(t, i=0):
@@ -113,7 +113,7 @@ def print_inorder_full_path(t, path="~/", include_ref=False):
             nodes.append(p+n.name)
         else:
             if not include_ref or n.ref == '$':
-                ref = ''
+                ref = '/'
             else:
                 ref = f' => {n.ref}'
             nodes.append(f"{p}{n.name.lower()}{ref}")
