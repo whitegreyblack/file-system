@@ -4,12 +4,60 @@ Takes in a list of file nodes and creates a tree.
 """
 import system.utils as utils
 
+class Tree(object):
+    Edge = "├──"
+    Line = "│  "
+    Corner = "└──"
+    Blank = "   "
+    Empty = ""
+    @staticmethod
+    def grow(directory):
+        """Print directory tree"""
+        depth = 0
+        size = len(directory.rootdir.files_and_folders)
+        stack = [
+            (f, i, depth, size, Tree.Empty) 
+                for i, f in enumerate(directory.rootdir.files_and_folders)
+        ]
+        while stack:
+            # d determines indentation level
+            # l determines which tree string to use on print
+            (f, i, d, l, p), *stack = stack
+            link = ""
+            if d > 0:
+                link = Tree.Corner if i == l-1 else Tree.Edge
+            node = f"{p}{link}{f.name}"
+            if isinstance(f, File):
+                node += f" => {f.reference}"
+            print(node)
+
+            if isinstance(f, Folder):
+                childdir = f.child_directory.files_and_folders
+                size = len(childdir)
+                # break early if no children nodes in the directory
+                if size == 0:
+                    continue
+                
+                prefix = ""
+                # level under root never has lines
+                if d > 0:
+                    prefix = p + Tree.Line
+                    if i == l-1:
+                        prefix = p + Tree.Blank
+                nodes = [
+                    (f, i, d+1, size, prefix) for i, f in enumerate(childdir)
+                ]
+                # add to front of the stack
+                stack = nodes + stack
+
+
 class Directory(object):
     dirid = 1
     def __init__(self, gid, pid):
         self.group_directory_id = gid
         self.parent_directory_id = pid
         self.files_and_folders = list()
+
 
 class File(object):
     def __init__(self, name, dirid, nid, reference):
@@ -19,7 +67,12 @@ class File(object):
         self.name = name
         self.reference = reference
     def __repr__(self):
-        return "Folder"  
+        pid = self.group_directory.parent_directory_id
+        gid = self.group_directory_id
+        nid = self.file_id
+        ref = self.reference
+        return f"File({self.name}, nid={nid} pid={pid}, gid={gid}, ref={ref})"
+
 
 class Folder(object):
     def __init__(self, name, dirid, nid, cid):
@@ -29,24 +82,20 @@ class Folder(object):
         self.name = name
         self.child_directory_id = cid
         self.child_directory = Directory(cid, dirid)
-    
     def __repr__(self):
-        return f"""
-Folder {self.name}:
-> Paren DIR: {self.group_directory.parent_directory_id}
-> Group DIR: {self.group_directory_id}
-> Child DIR: {self.child_directory_id}
-"""[1:]
+        pid = self.group_directory.parent_directory_id
+        gid = self.group_directory_id
+        cid = self.child_directory_id
+        nid = self.folder_id
+        return f"Folder({self.name}, nid={nid} pid={pid}, gid={gid}, cid={cid})"
+
 
 class System(object):
     def __init__(self, l):
         self.rootdir = None
         sorted_list = sorted(l, key=lambda n: (n.gid, n.cid is None, n.name))
-        print("N G P C Name\n------------")
         for node in sorted_list or []:
-            # print(utils.el_repr(node))
             self.insert(node)
-        print("done inserting")
 
     def create_file(self, node):
         return File(node.name, node.gid, node.nid, node.ref)
@@ -71,37 +120,30 @@ class System(object):
                 nodeobj.group_directory = current
                 current.files_and_folders.append(nodeobj)
             else:
-                path_stops = node.path[2:].split('/')
-                print(path_stops)
-                print('Gid: ', node.gid)
+                index = 0
+                path_stops = node.path[2:].split('/')[:-1]
                 stop_iter = False
                 while not stop_iter:
-                    print("current group id:", current.group_directory_id)
                     for n in current.files_and_folders:
-                        if n.name in node.path:
-                            print(n.name, node.path)
+                        if n.name == path_stops[index]:
                             current = n.child_directory
+                            index += 1
                             break
                     if current.group_directory_id == node.gid:
                         stop_iter = True
-                print('stop loop:', current.group_directory_id)
                 nodeobj.group_directory = current
                 current.files_and_folders.append(nodeobj)
 
     def traversal(self):
         node = self.rootdir
-        print('traversal')
         nodes = [(node.group_directory_id, x) for x in node.files_and_folders]
         while nodes:
             n, *nodes = nodes
             gid, n = n
-            print(gid, n.name)
+            yield n
             if isinstance(n, Folder):
                 child_dir = n.child_directory
                 nodes = [(child_dir.group_directory_id, x) for x in child_dir.files_and_folders] + nodes
-
-    def find(self, path):
-        pass
 
     def size(self):
         return get_number_of_objects_in_dir()
@@ -112,10 +154,13 @@ if __name__ == "__main__":
     import os
 
     filepath = "." + os.path.sep + "data" + os.path.sep + "mini.yaml"
-    l = parser.parse(parser.load(filepath))
-    print('loop start')
-    for n in l:
-        print(n)
-    print('loop end')
+    stack = parser.load(filepath)
+    l = parser.parse(stack)
     s = System(l)
-    s.traversal()
+    Tree.grow(s)
+
+    filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
+    stack = parser.load(filepath)
+    l = parser.parse(stack)
+    s = System(l)
+    Tree.grow(s)

@@ -14,3 +14,30 @@ Images:
   b: "data/b"
   g: "data/g"
 a: "data/a"
+Videos:
+  FolderA:
+    FolderB:
+      FolderD:
+        FolderE:
+          FolderF:
+            file: "data/text"
+        FolderG:
+          file: "data/text"
+        FolderH:
+          file1: "data/text"
+          file2: "data/text"
+          file3: "data/text"
+          file4: "data/text"
+      FolderI:
+        file: "data/text"
+    FolderC:
+      file: "data/text"
+    file: "data/text"
+Music:
+  something: "data/something"
+# duplicate folder names will overwrite
+# dictionary that is built when parsing yaml
+Video:
+  other: "data/other"
+Video:
+  moth: "data/moth"

@@ -122,10 +122,12 @@ def to_hashlistsys(t):
     return d, l
 
 if __name__ == "__main__":
+    import pprint
     filepath = "data" + os.path.sep + "structure.yaml"
 
     # print("# Original File Contents")
     # print(read(filepath))
+    pprint.pprint(load(filepath))
     t = parse(load(filepath))
     print("# Node list: ")
     for i in t:
