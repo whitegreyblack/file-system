@@ -23,15 +23,25 @@ class Tree(object):
             # d determines indentation level
             # l determines which tree string to use on print
             (f, i, d, l, p), *stack = stack
+            folder = isinstance(f, Folder)
+            if folder:
+                nid = f"{f.folder_id:>2}"
+                cid = f"{f.child_directory_id:>2}"
+            else:
+                nid = f"{f.file_id:>2}"
+                cid = f"{'$':>2}"
+            gid = f"{f.group_directory_id:>2}"
+            pid = f"{f.group_directory.parent_directory_id:>2}"
+
             link = ""
             if d > 0:
                 link = Tree.Corner if i == l-1 else Tree.Edge
-            node = f"{p}{link}{f.name}"
-            if isinstance(f, File):
-                node += f" => {f.reference}"
-            print(node)
+            noderow = f"{nid} {gid} {pid} {cid} {p}{link}{f.name}"
+            if not folder:
+                noderow += f" => {f.reference}"
+            yield noderow
 
-            if isinstance(f, Folder):
+            if folder:
                 childdir = f.child_directory.files_and_folders
                 size = len(childdir)
                 # break early if no children nodes in the directory
@@ -51,12 +61,26 @@ class Tree(object):
                 stack = nodes + stack
 
 
+class DirectoryFolder(object):
+    def __init__(self, name, nid, gid, pid, cid):
+        self.name = name
+        self.folder_id = nid
+        self.group_directory_id = gid
+        self.parent_directory_id = pid
+        self.parent_directory = None
+        self.child_directory_id = cid
+        self.child_directory = None
+
+
 class Directory(object):
     dirid = 1
     def __init__(self, gid, pid):
         self.group_directory_id = gid
         self.parent_directory_id = pid
         self.files_and_folders = list()
+    def __repr__(self):
+        gid = self.group_directory_id
+        return f"Directory(gid={gid})"
 
 
 class File(object):
@@ -143,7 +167,10 @@ class System(object):
             yield n
             if isinstance(n, Folder):
                 child_dir = n.child_directory
-                nodes = [(child_dir.group_directory_id, x) for x in child_dir.files_and_folders] + nodes
+                nodes = [
+                    (child_dir.group_directory_id, x) 
+                        for x in child_dir.files_and_folders
+                ] + nodes
 
     def size(self):
         return get_number_of_objects_in_dir()
@@ -163,4 +190,5 @@ if __name__ == "__main__":
     stack = parser.load(filepath)
     l = parser.parse(stack)
     s = System(l)
-    Tree.grow(s)
+    for n in Tree.grow(s):
+        print(n)

@@ -1,17 +1,3 @@
-Documents:
-  file: "data/file"
-  Folder:
-    text: "data/text"
-  Directory:
-    image: "data/image"
-Music:
-  playlist: "data/playlist"
-  Favorites:
-Images:
-  z: "data/z"
-  b: "data/b"
-  g: "data/g"
-a: "data/a"
 Videos:
   FolderZ:
   FolderA:
@@ -45,11 +31,3 @@ Videos:
     FolderC:
       file: "data/text"
     file: "data/text"
-Music:
-  something: "data/something"
-# duplicate folder names will overwrite
-# dictionary that is built when parsing yaml
-Video:
-  other: "data/other"
-Video:
-  moth: "data/moth"

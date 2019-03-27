@@ -19,6 +19,7 @@ class Node(object):
 
 node = namedtuple("Node", "nid gid pid cid name")
 dirsort = lambda x: (x.cid is None, x.name)
+dirsortid = lambda x: x.nid
 dirfilter = lambda l, i: list(filter(lambda x: x.gid == i, l))
 findnode = lambda l, i: list(filter(lambda x: x.nid == i, l))
 
@@ -39,12 +40,15 @@ def els_repr(ns):
 
 
 def el_repr(n):
-    return f"{n.nid} {n.gid} {n.pid if n.cid else '$'} {n.cid if n.cid else '$'} {n.name}"
+    nid = f"{n.nid:>2}"
+    gid = f"{n.gid:>2}"
+    pid = f"{n.pid if n.cid else '$':>2}"
+    cid = f"{n.cid if n.cid else '$':>2}"
+    return f"{nid}  {gid}  {pid}  {cid}  {n.name}"
 
 
-def elements(t, i=0):
-    elms = sorted(dirfilter(t, i), key=dirsort, reverse=True)
-    return elms
+def elements(t, i=0, sort=dirsort):
+    return sorted(dirfilter(t, i), key=dirsort, reverse=True)
 
 
 def elements_indented(t, i=0, tab=0):
@@ -67,27 +71,33 @@ def write(filepath, data):
 
 
 def format_nodes_for_write(nodes):
-    print(print_inorder_indent_tree(nodes, 1))
     return print_inorder_indent_tree(nodes, 1)
 
 
-def print_inorder(t):
+class Style:
+    Default, Tree, Path = range(3)
+
+
+def print_inorder(t, sort=dirsort):
     *ns, n = elements(t, 0)
+    nodes = ["NID GID PID CID Name"]
     while n:
-        print(el_repr(n))
-        if n.cid:
-            for e in elements(t, n.cid):
+        nodes.append(el_repr(n))
+        if n.cid != '$':
+            for e in elements(t, i=n.cid, sort=dirsort):
                 ns.append(e)
         n = None
         if ns:
             n = ns.pop()
         else:
             break
+    print('\n'.join(nodes))
+    return '\n'.join(nodes)
 
 
 def print_inorder_indent_tree(t, level=0, indent_spacing=4):
     *ns, n = elements_indented(t, level)
-    nodes = []
+    nodes = ["NID GID PID CID Name"]
     while n:
         n, indent_level = n
         indent = ' ' * (indent_level * indent_spacing)
@@ -106,7 +116,7 @@ def print_inorder_indent_tree(t, level=0, indent_spacing=4):
 
 def print_inorder_full_path(t, path="~/", include_ref=False):
     *ns, n = elements_full_path(t, path=path)
-    nodes = []
+    nodes = ["NID GID PID CID Name"]
     while n:
         n, p = n
         if not n.cid:

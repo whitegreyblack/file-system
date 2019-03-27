@@ -89,6 +89,8 @@ def deserialize_copy(structure):
                 s.append((cname, cchildren, level, nodeid, gid, f"{path}{name}/", '$'))
                 nodeid += 1
             level += 1
+        else:
+            cid = '$'
         t.append(node(nid, gid, pid, cid, name, path, ref))
     return t
 
@@ -123,7 +125,7 @@ def to_hashlistsys(t):
 
 if __name__ == "__main__":
     import pprint
-    filepath = "data" + os.path.sep + "structure.yaml"
+    filepath = "data" + os.path.sep + "deep.yaml"
 
     # print("# Original File Contents")
     # print(read(filepath))
@@ -150,9 +152,7 @@ if __name__ == "__main__":
 
     print("# Print Inorder")
     print_inorder(t)
+    print()
 
-    # d = to_hashsys(t)
-    # print(d)
-    
-    # d, l = to_hashlistsys(t)
-    # print(d)
+    print("# Print Preorder")
+    print_inorder(t, sort=dirsortid)
