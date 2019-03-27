@@ -6,6 +6,7 @@ import click
 import system.utils as utils
 import system.parser as parser
 from collections import namedtuple
+from datetime import datetime
 import os
 
 class Tree(object):
@@ -65,41 +66,22 @@ class Tree(object):
                 stack = nodes + stack
 
 
-class DirectoryFolder(object):
-    def __init__(self, name, nid, gid, pid, cid):
-        self.name = name
-        self.folder_id = nid
-        self.group_directory_id = gid
-        self.parent_directory_id = pid
-        self.parent_directory = None
-        self.child_directory_id = cid
-        self.child_directory = None
-
-
 class Directory(object):
     dirid = 1
     def __init__(self, gid, pid):
         self.group_directory_id = gid
         self.parent_directory_id = pid
         self.files_and_folders = list()
+        self.modified_date = datetime.now()
+        self.created_date = datetime.now()
+    def update_last_modified_date(self):
+        self.last_modified_date = max(
+            lambda x: x.last_modified_date, 
+            self.files_and_folders
+        )
     def __repr__(self):
         gid = self.group_directory_id
         return f"Directory(gid={gid})"
-
-
-class File(object):
-    def __init__(self, name, dirid, nid, reference):
-        self.group_directory_id = dirid
-        self.group_directory = None
-        self.file_id = nid
-        self.name = name
-        self.reference = reference
-    def __repr__(self):
-        pid = self.group_directory.parent_directory_id
-        gid = self.group_directory_id
-        nid = self.file_id
-        ref = self.reference
-        return f"File({self.name}, nid={nid} pid={pid}, gid={gid}, ref={ref})"
 
 
 class Folder(object):
@@ -110,12 +92,32 @@ class Folder(object):
         self.name = name
         self.child_directory_id = cid
         self.child_directory = Directory(cid, dirid)
+        self.modified_date = datetime.now()
+        self.created_date = datetime.now()
     def __repr__(self):
         pid = self.group_directory.parent_directory_id
         gid = self.group_directory_id
         cid = self.child_directory_id
         nid = self.folder_id
         return f"Folder({self.name}, nid={nid} pid={pid}, gid={gid}, cid={cid})"
+
+
+class File(object):
+    def __init__(self, name, dirid, nid, reference):
+        self.group_directory_id = dirid
+        self.group_directory = None
+        self.file_id = nid
+        self.name = name
+        self.reference = reference
+        self.modified_date = datetime.now()
+        self.created_date = datetime.now()
+
+    def __repr__(self):
+        pid = self.group_directory.parent_directory_id
+        gid = self.group_directory_id
+        nid = self.file_id
+        ref = self.reference
+        return f"File({self.name}, nid={nid} pid={pid}, gid={gid}, ref={ref})"
 
 
 class System(object):
@@ -143,24 +145,20 @@ class System(object):
             nodedir.files_and_folders.append(nodeobj)
             self.rootdir = nodedir
         else:
+            index = 0
+            stop_iter = False
             current = self.rootdir
-            if current.group_directory_id == node.gid:
-                nodeobj.group_directory = current
-                current.files_and_folders.append(nodeobj)
-            else:
-                index = 0
-                path_stops = node.path[2:].split('/')[:-1]
-                stop_iter = False
-                while not stop_iter:
-                    for n in current.files_and_folders:
-                        if n.name == path_stops[index]:
-                            current = n.child_directory
-                            index += 1
-                            break
-                    if current.group_directory_id == node.gid:
-                        stop_iter = True
-                nodeobj.group_directory = current
-                current.files_and_folders.append(nodeobj)
+            path_stops = node.path[2:].split('/')[:-1]
+            while not stop_iter:
+                for n in current.files_and_folders:
+                    if n.name == path_stops[index]:
+                        current = n.child_directory
+                        index += 1
+                        break
+                if current.group_directory_id == node.gid:
+                    stop_iter = True
+            nodeobj.group_directory = current
+            current.files_and_folders.append(nodeobj)
 
     def traversal(self):
         node = self.rootdir
@@ -179,16 +177,10 @@ class System(object):
     def size(self):
         return get_number_of_objects_in_dir()
 
+
 @click.command()
 @click.argument('filepath', type=click.Path(exists=True))
 def main(filepath):
-    # filepath = "." + os.path.sep + "data" + os.path.sep + "mini.yaml"
-    stack = parser.load(filepath)
-    l = parser.parse(stack)
-    s = System(l)
-    Tree.grow(s)
-
-    # filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
     stack = parser.load(filepath)
     l = parser.parse(stack)
     s = System(l)

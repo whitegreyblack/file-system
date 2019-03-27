@@ -47,27 +47,27 @@ def load(filepath):
     return yaml.safe_load(read(filepath))
 
 # todo: references to files
-def deserialize_as_list(structure):
-    t = []
-    level = 1
-    nodeid = 1
-    # start with root node. all nodes will fall under this
-    s = [('Root', structure, 0, 0, '$')]
-    node = namedtuple("Node", "nid gid pid cid name")
+# def deserialize_as_list(structure):
+#     t = []
+#     level = 1
+#     nodeid = 1
+#     # start with root node. all nodes will fall under this
+#     s = [('Root', structure, 0, 0, '$')]
+#     node = namedtuple("Node", "nid gid pid cid name")
 
-    while s:
-        cid = level
-        n = s.pop(0)
-        name, children, gid, nid, pid = n
-        if isinstance(children, str):
-            cid = '$'
-        elif isinstance(children, dict):
-            for childname, subchildren in children.items():
-                s.append((childname, subchildren, level, nodeid, gid))
-                nodeid += 1
-        t.append(node(nid, gid, pid, cid, name))
-        level += 1
-    return t
+#     while s:
+#         cid = level
+#         n = s.pop(0)
+#         name, children, gid, nid, pid = n
+#         if isinstance(children, str):
+#             cid = '$'
+#         elif isinstance(children, dict):
+#             for childname, subchildren in children.items():
+#                 s.append((childname, subchildren, level, nodeid, gid))
+#                 nodeid += 1
+#         t.append(node(nid, gid, pid, cid, name))
+#         level += 1
+#     return t
 
 def deserialize_copy(structure):
     t = []
