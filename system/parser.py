@@ -1,6 +1,7 @@
 # parser.py
 import os
 import yaml
+import click
 from system.utils import *
 """
 Documents:
@@ -90,7 +91,7 @@ def deserialize_copy(structure):
                 nodeid += 1
             level += 1
         else:
-            cid = '$'
+            level += 1
         t.append(node(nid, gid, pid, cid, name, path, ref))
     return t
 
@@ -123,9 +124,11 @@ def to_hashlistsys(t):
             l.append(n)
     return d, l
 
-if __name__ == "__main__":
+@click.command()
+@click.argument('filepath', type=click.Path(exists=True))
+def main(filepath):
     import pprint
-    filepath = "data" + os.path.sep + "deep.yaml"
+    # filepath = "data" + os.path.sep + filename
 
     # print("# Original File Contents")
     # print(read(filepath))
@@ -156,3 +159,8 @@ if __name__ == "__main__":
 
     print("# Print Preorder")
     print_inorder(t, sort=dirsortid)
+
+
+if __name__ == "__main__":
+    main()
+    

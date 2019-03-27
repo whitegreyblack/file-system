@@ -2,7 +2,11 @@
 """
 Takes in a list of file nodes and creates a tree.
 """
+import click
 import system.utils as utils
+import system.parser as parser
+from collections import namedtuple
+import os
 
 class Tree(object):
     Edge = "├──"
@@ -175,20 +179,21 @@ class System(object):
     def size(self):
         return get_number_of_objects_in_dir()
 
-if __name__ == "__main__":
-    import system.parser as parser
-    from collections import namedtuple
-    import os
-
-    filepath = "." + os.path.sep + "data" + os.path.sep + "mini.yaml"
+@click.command()
+@click.argument('filepath', type=click.Path(exists=True))
+def main(filepath):
+    # filepath = "." + os.path.sep + "data" + os.path.sep + "mini.yaml"
     stack = parser.load(filepath)
     l = parser.parse(stack)
     s = System(l)
     Tree.grow(s)
 
-    filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
+    # filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
     stack = parser.load(filepath)
     l = parser.parse(stack)
     s = System(l)
     for n in Tree.grow(s):
         print(n)
+
+if __name__ == "__main__":
+    main()
