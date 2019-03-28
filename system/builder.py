@@ -1,8 +1,9 @@
-# structure.py
+# builder
 import random
 from collections import namedtuple
 import click
-from system.tree import Directory, Folder, File, System, Tree
+from system.tree import Tree
+from system.system import File, Folder, System
 """
 Could also be named [generate.py] (maybe)
 Main idea for this class is to build a similar structure not unlike below:
@@ -44,10 +45,10 @@ def build_random_node(nid, gid):
     return node(nid, gid, pid, cid, name)
 
 def build_structure(count=100):
-                 "nid gid pid cid name path ref"
+    #  "nid gid pid cid name path ref"
     nodes = [node(0, 0, '$', 1, 'Root', '~/', '$')]
     s = System(nodes)
-    for n in Tree.grow(s):
+    for n in Tree.grow(s.root):
         print(n)
     cutoff = 1.0
     max_depth = 10
