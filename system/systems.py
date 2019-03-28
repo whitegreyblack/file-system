@@ -2,8 +2,54 @@
 
 import click
 import system.parser as parser
-import system.tree as tree
 import system.utils as utils
+
+class Tree (object):
+    Edge = "├──"
+    Line = "│  "
+    Corner = "└──"
+    Blank = "   "
+    Empty = ""
+    @staticmethod
+    def newgrow(filesystem):
+        stack = [(filesystem.root, 0, 0, 1, Tree.Empty)]
+        while stack:
+            (f, i, d, s, p), *stack = stack
+            folder = isinstance(f, Folder)
+            # print(f.name, 'isfolder', folder, type(f))
+            if folder:
+                nid = f"{f.folder_id:2}"
+                cid = f"{f.child_directory_id:2}"
+            else:
+                nid = f"{f.file_id:2}"
+                cid = f"{'$':>2}"
+            # gid = f"{f.directory_id:>2}"
+            pid = f"{f.parent_directory_id:>2}"
+
+            link = ""
+            if d > 0:
+                link = Tree.Corner if i == s-1 else Tree.Edge
+            noderow = f"{nid} {pid} {cid} {p}{link}{f.name}"
+            if not folder:
+                noderow += f" => {f.reference}"
+            yield noderow
+
+            if folder:
+                size = len(f.files_and_folders)
+                if size == 0:
+                    continue
+                prefix = ""
+                if d > 0:
+                    prefix = p + Tree.Line
+                    if i == s-1:
+                        prefix = p + Tree.Blank
+                nodes = [
+                    (f, i, d+1, size, prefix) for i, f, in
+                        enumerate(f.files_and_folders)
+                ]
+                stack = nodes + stack            
+            if not stack:
+                break
 
 class Folder(object):
     def __init__(self, name, nid, gid, pid, cid):
@@ -19,31 +65,30 @@ class Folder(object):
         print('find ', foldername)
         for f in self.files_and_folders:
             if isinstance(f, Folder) and f.name == foldername:
+                print('found', f.name)
                 return f
         return None
     def __repr__(self):
-        pid = self.parent_directory_id
-        gid = self.directory_id
-        cid = self.child_directory_id
-        nid = self.folder_id
-        return f"Folder({self.name}, nid={nid} pid={pid}, gid={gid}, cid={cid})"
+        pid = f"{self.parent_directory_id:2}"
+        gid = f"{self.directory_id}"
+        cid = f"{self.child_directory_id}"
+        nid = f"{self.folder_id}"
+        return f"F(nid={nid} pid={pid}, gid={gid}, cid={cid}, {self.name})"
 
 class File(object):
     def __init__(self, name, nid, gid, pid, reference):
-        # self.group_directory_id = dirid
-        self.group_directory = None
-        self.group_directory_id = -1
+        self.group_directory_id = gid
         self.file_id = nid
         self.name = name
         self.reference = reference
-        self.parent_directory_id = -1
+        self.parent_directory_id = pid
 
     def __repr__(self):
-        pid = self.parent_directory_id
-        gid = self.group_directory_id
-        nid = self.file_id
+        pid = f"{self.parent_directory_id:2}"
+        gid = f"{self.group_directory_id:2}"
+        nid = f"{self.file_id:2}"
         ref = self.reference
-        return f"File({self.name}, nid={nid} pid={pid}, gid={gid}, ref={ref})"
+        return f"f(nid={nid}, pid={pid}, gid={gid}, {self.name}, ref={ref})"
 
 # -- system is just a container for holding all files/folders
 class System(object):
@@ -64,44 +109,32 @@ class System(object):
         return self.create_file(node) if is_file else self.create_folder(node)
 
     def insert(self, node):
-        print('insert')
         nodeobj = self.create_system_object(node)
         if not self.root:
+            print('insert root')
+
             self.root = nodeobj
         else:
+            print('insert subroot', node.name)
             index = 0
             stop_iter = False
             current = self.root
             _, *path = node.path[2:].split('/')[:-1]
+            # we are at root's sub children
             if not path:
                 current.files_and_folders.append(nodeobj)
                 return
-
-            print(path)
+            # anything below depth of 1 needs recursion
+            print(node.name, node.path, path)
             while current.directory_id != node.pid and path:
-                folder = current.find_folder(path.pop())
+                folder = current.find_folder(path.pop(0))
                 print('>>>',folder)
+                if not folder:
+                    break
+                current = folder
+                print('current is now', current.name)
             current.files_and_folders.append(nodeobj)
-            # exit()
-
-            # while not stop_iter:
-            #     print(node.name, current.files_and_folders, current.directory_id, node.gid, node.pid)
-            #     for n in current.files_and_folders:
-            #         print(n.name, path_stops[index])
-            #         if n.name == path_stops[index]:
-            #             current = n.child_directory
-            #             index += 1
-            #         exit()
-            #         break
-            #     if current.directory_id == node.pid:
-            #         print('match', current.directory_id, node.pid)
-            #         stop_iter = True
-            # current.files_and_folders.append(nodeobj)
-            # while paths:
-            #     path, *paths = paths
-            #     if path == current.name:
                     
-
     def traversal(self):
         node = self.root
         nodes = [(node.group_directory_id, x) for x in node.files_and_folders]
@@ -121,12 +154,15 @@ class System(object):
 def main(filepath):
     stack = parser.load(filepath)
     l = parser.parse(stack)
+    for n in l:
+        print(n)
     utils.print_inorder(l)
     utils.print_inorder_indent_tree(l)
     s = System(l)
     print(s.root)
-    print(s.root.files_and_folders)
     for n in s.root.files_and_folders:
+        print('>>>',n)
+    for n in Tree.newgrow(s):
         print(n)
 
 if __name__ == "__main__":

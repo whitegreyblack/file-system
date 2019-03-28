@@ -1,4 +1,4 @@
-Videos:
+Video:
   FolderZ:
   FolderA:
     FolderB:
@@ -31,3 +31,6 @@ Videos:
     FolderC:
       file: "data/text"
     file: "data/text"
+Videos:
+  goals:
+    text: "data/text"
