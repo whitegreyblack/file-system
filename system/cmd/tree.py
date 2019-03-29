@@ -60,7 +60,8 @@ def tree(startnode:object)->str:
         if deep:
             branch = Branch.Corner if last else Branch.Edge
         # send back the formatted string
-        yield f"{nid} {pid} {cid} {p}{branch}{f.name}{ref}"
+        # yield f"{nid} {pid} {cid} {p}{branch}{f.name}{ref}"
+        yield f"{p}{branch}{f.name}{ref}"
         if not stack:
             break
     yield f"Directories: {folders}, Files: {files}"

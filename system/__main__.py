@@ -4,7 +4,7 @@ import sys
 import click
 import system.utils as utils
 import system.parser as parser
-from system.tree import tree
+from system.cmd import tree, ls, cd
 from system.system import System
 
 
@@ -12,21 +12,17 @@ def check_path(filepath):
     if not os.path.exists(filepath):
         raise FileNotFoundError(filepath)
 
+
 def build_tree(filepath):
-    # filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
-    # if not os.path.exists(filepath):
-    #     raise FileNotFoundError(filepath)
     check_path(filepath)
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
     s = System(l)
     out = tree(s.root)
-    print('\n'.join(out))
+    return '\n'.join(out)
+
 
 def build_path(filepath):
-    # filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
-    # if not os.path.exists(filepath):
-    #     raise FileNotFoundError(filepath)
     check_path(filepath)
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
@@ -46,34 +42,23 @@ def file_size(ref):
 
 def format_file_or_folder(f, c):
     if f.cid != '$':
-        return f"{f.name.lower():<15}{c:<3}"
+        return f"{f.name.lower():<15}{c:>3}"
     else:
         return f"{f.name.lower():<10}" + str(file_size(f.ref))
 
 
-def build_absolute_path(l, nid):
+def absolute_path(directory):
+    if directory.parent_directory == None:
+        return f"~/{directory.name.lower()}"
     path = ""
-    n, *_ = utils.findnode(l, nid)
-    if not n:
-        raise Exception(f"Could not find node with nid {n.nid}")
-    path = f"{n.name}/"
-    while n.pid != '$':
-        n, *_ = utils.findnode(l, n.pid)
-        if n:
-            path = f"{n.name}/" + path
-    return "~/" + path.lower()
+    current = directory
+    while current.parent_directory:
+        path = current.name + "/" + path
+        current = current.parent_directory
+    return f"~/{path.lower()}"
 
-
-def list_directories(nodelist, dirindex, sorteddir):
-    print_list = []
-    # print_list.append(f"{'[~/root/]:':<30}#")
-    if dirindex > 0:
-        print_list.append('..')
-    for n in sorteddir:
-        c = utils.dirsum(nodelist, n.cid)
-        print_list.append(format_file_or_folder(n, c))
-    print('\n'.join(print_list))
-
+def list_directories(directory, ls_long=False):
+    return '\n'.join(x.name for x in directory.files_and_folders)
 
 def save_system(nodes):
     filepath = "." + os.path.sep + "saves" + os.path.sep + "save.yaml"
@@ -81,15 +66,19 @@ def save_system(nodes):
     data = utils.format_nodes_for_write(nodes)
     utils.write(filepath, data)
 
+def calculate_terminal_size():
+    return os.get_terminal_size()
 
-def file_system():
-    filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(filepath)
+def calculate_max_columns():
+    return max(1, calculate_terminal_size().lines)
+
+def file_system(filepath):
+    check_path(filepath)
 
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
-    system 
+    system = System(l)
+    current = system.root
     dirsize = 0
     oldindex = 0
     dirindex = 0
@@ -112,11 +101,6 @@ pwd    : output absolute path
     error_cat_not_valid = "... Could not read '{}'. '{}' is a directory."
 
     while 1:
-        dirnodes = utils.dirfilter(l, dirindex)
-        parnode, *_ = utils.findnode(l, dirnodes[0].nid)
-        dirnames = list(map(lambda x: x.name.replace('/', ''), dirnodes))
-        sorteddir = sorted(dirnodes, key=utils.dirsort)
-
         # any output is printed here
         if output:
             print(output)
@@ -124,7 +108,7 @@ pwd    : output absolute path
 
         # user input
         try:
-            user_input = input(f">>> ")
+            user_input = input(f"{absolute_path(current)}>>> ")
         except (KeyboardInterrupt, EOFError):
             break
 
@@ -137,72 +121,80 @@ pwd    : output absolute path
 
         # for all other inputs
         if cmd in ('ls', 'dir'):
-            output = list_directories(l, dirindex, sorteddir)
+            output = ls(current)
+        elif cmd in ('col', 'column', 'columns'):
+            output = calculate_terminal_size().columns
+        elif cmd in ('row', 'rows'):
+            output = calculate_terminal_size().lines
+        elif cmd in ('maxcol'):
+            output = calculate_max_columns()
         elif cmd in ('?', 'help'):
             output = help_string
-        elif cmd == 'save':
-            save_system(l)
-            output = save_string
+        # elif cmd == 'save':
+        #     save_system(l)
+        #     output = save_string
+        elif cmd == 'tree':
+            output = "\n".join(tree(current))
         elif cmd == 'exit':
             break
         elif cmd == 'cat':
-            i, *inputs = inputs
-            if i in set(x.lower() for x in dirnames):
-                for n in dirnodes:
-                    if i.lower() == n.name.lower():
-                        if n.cid != '$':
-                            folder = True
-                        node = n
-                        break
-                if not folder:
-                    output = read_file_contents()
-                else:
-                    output = error_cat_not_valid.format(n.name, n.name)
-        elif cmd == 'cd':
-            i, *inputs = inputs
-            if i == '~':
-                oldindex, dirindex = dirindex, 0
-            # going up system level
-            elif i == '..' and dirindex > 0:
-                # in an empty folder, no references in directory node list
-                print(oldindex, dirindex, '<=', dirindex, parnode.gid)
-                oldindex, dirindex = dirindex, parnode.gid
-            # going down system level
-            elif i.lower() in set(x.lower() for x in dirnames):
-                node = None
-                folder = False
-
-                # find exact file/directory to move into
-                for n in dirnodes:
-                    if i.lower() == n.name.lower():
-                        if n.cid != '$':
-                            folder = True
-                        node = n
-                        break
-                if folder:
-                    print(oldindex, dirindex, '<=', dirindex, node.cid)
-                    oldindex, dirindex = dirindex, node.cid
-                else:
-                    output = error_dir_not_valid.format(node.name)
-            else:
-                output = error_dir_not_found
-        elif cmd == 'pwd':
-            output = build_absolute_path(l, dirindex)
+            output = cat()
+        # elif cmd == 'cat':
+        #     i, *inputs = inputs
+        #     if i in set(x.lower() for x in dirnames):
+        #         for n in dirnodes:
+        #             if i.lower() == n.name.lower():
+        #                 if n.cid != '$':
+        #                     folder = True
+        #                 node = n
+        #                 break
+        #         if not folder:
+        #             output = read_file_contents()
+        #         else:
+        #             output = error_cat_not_valid.format(n.name, n.name)
+        # elif cmd == 'cd':
+        #     i, *inputs = inputs
+        #     if i == '~':
+        #         oldindex, dirindex = dirindex, 0
+        #     # going up system level
+        #     elif i == '..' and dirindex > 0:
+        #         # in an empty folder, no references in directory node list
+        #         print(oldindex, dirindex, '<=', dirindex, parnode.gid)
+        #         oldindex, dirindex = dirindex, oldindex
+        #     # going down system level
+        #     elif i.lower() in set(x.lower() for x in dirnames):
+        #         node = None
+        #         folder = False
+        #         # find exact file/directory to move into
+        #         for n in dirnodes:
+        #             if i.lower() == n.name.lower():
+        #                 if n.cid != '$':
+        #                     folder = True
+        #                 node = n
+        #                 break
+        #         if folder:
+        #             print(oldindex, dirindex, '<=', dirindex, node.cid)
+        #             oldindex, dirindex = dirindex, node.cid
+        #         else:
+        #             output = error_dir_not_valid.format(node.name)
+        #     else:
+        #         output = error_dir_not_found
+        # elif cmd == 'pwd':
+        #     output = build_absolute_path(l, dirindex)
         else:
             output = error_cmd_not_valid
 
 
 @click.command()
 @click.option('tree', '--tree', multiple=True, type=click.Path())
-@click.option('path', '--path', is_flag=True, default=None)
+@click.option('path', '--path')
 def main(tree, path):
     if not tree and not path:
-        file_system()
+        print("""py -m system [--tree|--path]=[PATH]""")
     elif path:
-        build_path()
+        file_system(path)
     else:
         for f in tree:
-            print(f)
             build_tree(f)
 
 
