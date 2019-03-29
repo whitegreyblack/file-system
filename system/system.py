@@ -25,7 +25,8 @@ class Folder(object):
         # gid = f"{self.directory_id}"
         cid = f"{self.child_directory_id}"
         nid = f"{self.folder_id}"
-        return f"Folder(nid={nid}, {self.name}, children={len(self.files_and_folders)})"
+        children = len(self.files_and_folders)
+        return self.name
 
 class File(object):
     def __init__(self, name, nid, gid, pid, reference):
@@ -40,7 +41,7 @@ class File(object):
         # gid = f"{self.group_directory_id:2}"
         nid = f"{self.file_id}"
         ref = self.reference
-        return f"File(nid={nid}, {self.name}, ref={ref})"
+        return f"{self.name} => {ref}"
 
 # -- system is just a container for holding all files/folders
 class System(object):
@@ -50,9 +51,11 @@ class System(object):
         inorder = 2
         postorder = 3
 
-    def __init__(self, l):
-        self.root = None # entry point
-        sorted_list = sorted(l, key=lambda n: (n.gid, n.cid is None, n.name))
+    def __init__(self, nodes):
+        self.root = None
+        self.size = 0
+        presort = lambda n: (n.gid, n.cid is None, n.name)
+        sorted_list = sorted(nodes, key=presort)
         for node in sorted_list or []:
             self.insert(node)
 
@@ -70,6 +73,7 @@ class System(object):
         nodeobj = self.create_system_object(node)
         if not self.root:
             self.root = nodeobj
+            self.size += 1
             return
         index = 0
         stop_iter = False
@@ -78,6 +82,7 @@ class System(object):
         # we are at root's sub children
         if not path:
             current.files_and_folders.append(nodeobj)
+            self.size += 1
             return
         # anything below depth of 1 needs recursion
         while current.directory_id != node.pid and path:
@@ -86,7 +91,8 @@ class System(object):
                 break
             current = folder
         current.files_and_folders.append(nodeobj)
-                    
+        self.size += 1
+
     def traverse(self, order=Traversal.preorder):
         if order == self.Traversal.preorder:
             for f in self.preorder():
@@ -110,6 +116,7 @@ def main(filepath):
     data = parser.load(filepath)
     nodes = parser.parse(data)
     system = System(nodes)
+    print(f"Size of file system: {system.size}")
     print("# Preorder traversal")
     for f in system.traverse():
         print(f)

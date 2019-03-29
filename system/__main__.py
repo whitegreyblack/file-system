@@ -4,37 +4,30 @@ import sys
 import click
 import system.utils as utils
 import system.parser as parser
-import system.hashsystem as hashsys
-import system.listsystem as listsys
-import system.hashlistsystem as hlsys
-
-@click.command()
-@click.option('tree', '--tree', is_flag=True, default=None)
-@click.option('path', '--path', is_flag=True, default=None)
-def main(tree, path):
-    if not tree and not path:
-        file_system()
-    elif path:
-        build_path()
-    else:
-        build_tree()
+from system.tree import tree
+from system.system import System
 
 
-def build_tree():
-    filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
+def check_path(filepath):
     if not os.path.exists(filepath):
         raise FileNotFoundError(filepath)
-    
+
+def build_tree(filepath):
+    # filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
+    # if not os.path.exists(filepath):
+    #     raise FileNotFoundError(filepath)
+    check_path(filepath)
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
-    parser.print_inorder_indent_tree(l)
+    s = System(l)
+    out = tree(s.root)
+    print('\n'.join(out))
 
-
-def build_path():
-    filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(filepath)
-    
+def build_path(filepath):
+    # filepath = "." + os.path.sep + "data" + os.path.sep + "structure.yaml"
+    # if not os.path.exists(filepath):
+    #     raise FileNotFoundError(filepath)
+    check_path(filepath)
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
     parser.print_inorder_full_path(l)
@@ -96,7 +89,7 @@ def file_system():
 
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
-
+    system 
     dirsize = 0
     oldindex = 0
     dirindex = 0
@@ -197,6 +190,21 @@ pwd    : output absolute path
             output = build_absolute_path(l, dirindex)
         else:
             output = error_cmd_not_valid
+
+
+@click.command()
+@click.option('tree', '--tree', multiple=True, type=click.Path())
+@click.option('path', '--path', is_flag=True, default=None)
+def main(tree, path):
+    if not tree and not path:
+        file_system()
+    elif path:
+        build_path()
+    else:
+        for f in tree:
+            print(f)
+            build_tree(f)
+
 
 if __name__ == '__main__':
     main()
