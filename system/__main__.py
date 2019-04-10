@@ -4,7 +4,9 @@ import sys
 import click
 import system.utils as utils
 import system.parser as parser
-from system.cmd import tree, ls, cd
+from system.cmd.tree import tree as treecmd
+from system.cmd.ls import ls
+from system.cmd.cd import cd
 from system.system import System
 
 
@@ -18,7 +20,7 @@ def build_tree(filepath):
     data = parser.load(filepath)
     l = parser.parse(parser.load(filepath))
     s = System(l)
-    out = tree(s.root)
+    out = treecmd(s.root)
     return '\n'.join(out)
 
 
@@ -195,7 +197,8 @@ def main(tree, path):
         file_system(path)
     else:
         for f in tree:
-            build_tree(f)
+            t = build_tree(f)
+            print(t)
 
 
 if __name__ == '__main__':

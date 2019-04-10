@@ -2,13 +2,21 @@
 """
 Takes in a list of file nodes and creates a tree.
 """
-import click
-import system.utils as utils
-import system.parser as parser
-from system.system import File, Folder, System
+import os
+import sys
 from collections import namedtuple
 from datetime import datetime
-import os
+
+import click
+from colorama import Back, Fore, Style, init
+
+import system.parser as parser
+import system.utils as utils
+from system.system import File, Folder, System
+
+
+class TreeArgs(object):
+    Color = 1
 
 class Branch(object):
     Edge = "├──"
@@ -16,8 +24,11 @@ class Branch(object):
     Corner = "└──"
     Blank = "   "
     Empty = ""
-    
-def tree(startnode:object)->str:
+
+def check(flag, value):
+    return value & flag == flag
+
+def tree(startnode:object, args=None) -> str:
     """
     Using the start node and keeping track of depth and last item in directory,
     iterate the system tree structure to generate a list of formatted strings.
@@ -61,22 +72,44 @@ def tree(startnode:object)->str:
             branch = Branch.Corner if last else Branch.Edge
         # send back the formatted string
         # yield f"{nid} {pid} {cid} {p}{branch}{f.name}{ref}"
-        yield f"{p}{branch}{f.name}{ref}"
+        output = None
+        if args:
+            colorized = check(TreeArgs.Color, args)
+            if colorized and isfolder:
+                output = f"{p}{branch}{Fore.BLUE}{f.name}{Style.RESET_ALL + ' ' + Back.BLACK}{ref}"
+
+        if not output:
+            output =  f"{p}{branch}{f.name}{ref}"
+        yield output        
         if not stack:
             break
     yield f"Directories: {folders}, Files: {files}"
 
 @click.command()
 @click.argument('filepath', type=click.Path(exists=True))
-def main(filepath:str):
+@click.option("--color", "color", is_flag=True, default=False)
+def main(filepath:str, color:bool):
     data = parser.load(filepath)
     nodes = parser.parse(data)
     system = System(nodes)
-    for f in tree(system.root):
-        print(f)
 
-    for f in tree(System(nodes=parser.parse(parser.load(filepath))).root):
-        print(f)
+    args = 0
+    if color:
+        args |= TreeArgs.Color
 
+    for f in tree(system.root, args=args):
+        print(f)
+    print('now oclor')
+    from pygments import highlight
+    from pygments.lexers import Python3Lexer
+    from pygments.formatters import TerminalFormatter, Terminal256Formatter
+    print(highlight("print('Jellow')", Python3Lexer(), TerminalFormatter()))
+    print(highlight("print('Jellow')", Python3Lexer(), Terminal256Formatter()))
+    sys.stdout.write(highlight("print('Jellow')", Python3Lexer(), TerminalFormatter()))
+    outfile = colorama.initialise.wrap_stream(
+                outfile, convert=None, strip=None, autoreset=False, wrap=True)
+                
 if __name__ == "__main__":
+    from colorama import init
+    init()
     main()
