@@ -1,0 +1,111 @@
+# README
+"""
+Example: 
+    setting     : fantasy medieval world
+    recipe      : tomato soup
+    ingredients : water  : ingredient
+                  tomato : ingredient
+                  onion  : ingredient
+                  garlic : ingredient
+                  basil  : ingredient
+                  bowl   : tool
+                  log, 1 :-> bowl
+    structure   :
+        [water, tomato, onion, garlic, basil, bowl] -> tomato soup
+                                              |
+                                              [log] -> bowl
+--- Digression:
+We could turn this into a cli game:
+    Market, Garden, Furnace(forging), Kitchen, Forest, Mines, River, Plains
+
+Syntax:
+    cd (change destination) -> [location] (marked above)
+    [action] ex. if in market (show | buy | sell)
+---
+
+But let's focus on the graph for now:
+    Assume each item in the ingredient list for tomato soup has an unique id.
+    Each finished product would have a set of ids listed internally to each
+    item that it was created from. This would be a static set. Would it be
+    better to create a database to hold these id's or create them in memory?
+    
+We first need a list of ingredients to start off with. Let's use the four
+basic items in every crafting game:
+    WOOD, STONE, WATER, DIRT
+These would come from the following TREE, BOULDER, RIVER, GROUND, though
+these aren't really relavant to what we are making.
+
+So what could we make from these base ingredients? If we had WOOD we could
+make sticks. Maybe not a direct jump. What if from the transition from WOOD
+to STICK, we have LOG. If we had stone we could make stone fragment. From 
+dirt and water we could make mud. Put all together we now have three new 
+ingredients to use:
+        WOOD -> LOG -> STICK
+        STONE -> STONE_FRAGMENT
+        WATER + DIRT -> MUD
+On the one hand we could continue working with our now 7 ingredient list to
+create more ingredients. On the other, we could step back from the 4 basic
+items and look at the wider picture to include more basic ingredients.
+
+If we think about where these four basic ingredients come from we can say
+that WOOD comes from TREE, STONE comes from MOUNTAIN, WATER comes from RIVER,
+and DIRT comes from GROUND. If we think of these basic sources we can think
+of more basic ingredients to use:
+        GROUND -> DIRT
+        TREE -> 
+            | LOG    -> STICK (maybe more than branch)
+            | BRANCH -> STICK 
+            | FRUIT  -> SEED
+
+               LOG
+             /        \
+        TREE            Branch
+             \        /
+               BRANCH
+    So here we have two different ingredients with the same source but also
+    the same recipe for a later ingredient.
+ 
+        RIVER ->
+            | WATER
+            | ANIMAL ->
+                | FISH
+        MOUNTAIN ->
+            | STONE  -> STONE_FRAGMENT
+            | IRON   -> IRON_DUST
+            | GEM    ->
+                | RUBY
+                | EMERALD
+                | DIAMOND
+            | CHARCOAL
+
+        BEACH -> SAND
+
+Now we have a hefty list of basic ingredients, even some sub ingredients
+based off of basic ingredients.
+
+        STICK + CHARCOAL -> TORCH
+        LOG + CHARCOAL   -> CAMPFIRE
+
+With these equations we produced not an ingredient but a tool. The current
+syntax was using either:
+        <Source>     -> <Ingredient>
+        <Ingredient> -> <Ingredient>
+The equations should now include:
+        <Ingredient> + <Ingredient> -> <Ingredient>
+        <Ingredient> + <Ingredient> -> <Tool>
+If written in code this might look like:
+        def craft(ingredient, *ingredients): pass
+The creation of non-ingredients also adds the following equation:
+        <Tool> + <Ingredient> -> <Ingredient>
+        <Tool> + <Ingredient> -> <Tool>
+Tools will allow for much more complex recipes and crafting.
+        CAMPFIRE + ANIMAL_MEAT -> COOKED_ANIMAL_MEAT + BONE
+        CAMPFIRE + FISH -> ANIMAL_MEAT + BONE
+These produce the following equation:
+        <Tool> + <Ingredient> -> <Ingredient> + ... + <Ingredient>
+We need a way to add ingredients, tools, and other items such that when an
+object is added, the graph of the objects will dynamically change. We also
+need a the graph to add new edges and nodes every time a new object is
+added.
+"""
+
