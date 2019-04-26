@@ -12,7 +12,7 @@ class Branch(object):
     Empty = ""
 
 class Tree(object):
-    actions = set('insert delete count paint find traverse tree'.split())
+    actions = set('insert balance delete count paint find traverse tree inorder preorder postorder'.split())
     def __init__(self):
         self.root = None
     def __str__(self):
@@ -23,7 +23,7 @@ class Tree(object):
     def count(self):
         dto = DTO()
         if not self.root:
-            return 0
+            return dto
         nodes = [self.root]
         count = 0
         while nodes:
@@ -57,10 +57,10 @@ class Tree(object):
         dto.messages.append(f"{x} is not in the tree")
         return dto
     def insert(self, x):
+        """TODO: implement balancing after insert"""
         dto = DTO()
-        node = Node(data=x)
         if not self.root:
-            self.root = node
+            self.root = Node(data=x)
             dto.success = self.root is not None
             dto.messages.append(f"Tree is empty. Inserting {x} at root")
             return dto
@@ -69,11 +69,14 @@ class Tree(object):
             dto.messages.append(f"Tree is not empty. Starting descent with root")
         while 1:
             dto.messages.append(f"Current node value is {temp.data}")
-            smaller = x <= temp.data
-            if smaller:
+            if x == temp.data:
+                temp.count += 1
+                dto.messages.append(f"{x} already exists in the tree. Incrementing count")
+                break
+            elif x < temp.data:
                 dto.messages.append(f"{x} is smaller or equal to {temp.data}. Go left.")
                 if not temp.left:
-                    temp.left = node
+                    temp.left = Node(data=x)
                     temp.left.parent = temp
                     dto.messages.append(f"Left is empty. Inserting {x} left of {temp.data}")
                     break
@@ -83,7 +86,7 @@ class Tree(object):
             else:
                 dto.messages.append(f"{x} is larget than {temp.data}. Go right.")
                 if not temp.right:
-                    temp.right = node
+                    temp.right = Node(data=x)
                     temp.right.parent = temp
                     dto.messages.append(f"Right is empty. Inserting {x} right of {temp.data}")
                     break
@@ -92,69 +95,132 @@ class Tree(object):
                     dto.messages.append(f"Right is not empty. Setting right as current node.")
         dto.success = True
         return dto
-    def traverse(self, style=0):
+    def traverse(self, style=1):
+        dto = DTO()
+        if not self.root:
+            dto.success = False
+            dto.messages.append(f"Tree is empty. No nodes to traverse.")
+            return dto
+        if style == 0:
+            traversal = self.preorder
+        elif style == 1:
+            traversal = self.inorder
+        elif style == 2:
+            traversal = self.postorder
+        return response()
+    def inorder(self):
+        dto = DTO()
+        if not self.root:
+            dto.success = False
+            dto.messages.append(f"Tree is empty. No nodes to traverse.")
+            return dto
+        node = self.root
+        exhausted = False
+        nodes = []
+        ordered = []
+        while not exhausted:
+            if node is not None:
+                nodes.append(node)
+                node = node.left
+            else:
+                if nodes:
+                    node = nodes.pop()
+                    ordered.append(node)
+                    node = node.right
+                else:
+                    exhausted = True
+        dto.success = bool(ordered)
+        if dto.success:
+            dto.data = ordered
+            dto.messages.append(" ".join(str(d.data) for d in ordered))
+        return dto
+    def preorder(self):
+        dto = DTO()
+        if not self.root:
+            dto.success = False
+            dto.messages.append(f"Tree is empty. No nodes to traverse.")
+            return dto
+
+        ordered = []
+        nodes = [self.root]
+        while nodes:
+            node = nodes.pop(0)
+            ordered.append(str(node.data))
+            if node.left:
+                nodes.append(node.left)
+            if node.right:
+                nodes.append(node.right)
+        dto.success = bool(ordered)
+        if dto.success:
+            dto.data = ordered
+            dto.messages.append(" ".join(str(d) for d in ordered))
+        return dto
+    def postorder(self):
         dto = DTO()
         if not self.root:
             dto.success = False
             dto.messages.append(f"Tree is empty. No nodes to traverse.")
             return dto
         ordered = []
-        if style == 0:
-            # preorder
-            node = self.root
-            exhausted = False
-            nodes = []
-            while not exhausted:
-                if node is not None:
-                    nodes.append(node)
-                    node = node.left
-                else:
-                    if nodes:
-                        node = nodes.pop()
-                        ordered.append(str(node.data))
-                        node = node.right
-                    else:
-                        exhausted = True
-        elif style == 1:
-            # inorder
-            nodes = [self.root]
-            while nodes:
-                node = nodes.pop(0)
-                ordered.append(str(node.data))
-                if node.left:
-                    nodes.append(node.left)
-                if node.right:
-                    nodes.append(node.right)
-        elif style == 2:
-            # postorder
-            temp = self.root
-            exhausted = False
-            nodes = []
-            while not exhausted:
-                if temp is not None:
-                    nodes.append(temp)
-                    temp = temp.left
-                else:
-                    if nodes:
-                        temp = nodes.pop()
-                        ordered.append(str(temp.data))
-                        temp = temp.right
-                    else:
-                        exhausted = True
-        dto.messages.append(" ".join(ordered))
-        dto.success = True
+        node = self.root
+        exhausted = False
+        nodes = [self.root]
+        while nodes:
+            node = nodes.pop()
+            ordered.append(str(node.data))
+            if node.left:
+                nodes.append(node.left)
+            if node.right:
+                nodes.append(node.right)
+        dto.data = ordered[::-1]
+        dto.success = bool(ordered)
         return dto
+    def balance(self):
+        dto = DTO()
+        if not self.root:
+            dto.success = False
+            dto.messages.append(f"Tree is empty. Cannot balance empty tree.")
+            return dto
+        response = self.inorder()
+        if not response.success:
+            return response
+        self.root = None
+        l, m, r = 0, len(response.data) // 2, len(response.data)
+        nodes = [response.data[m]]
+        ordered = []
+        while nodes:
+            node = nodes.pop(0)
+            print(node)
+            self.insert(node.data)
+            left = response.data[l:m]
+            if left:
+                l, m, r = 0, len(left) // 2, len(left)
+                nodes.append(response.data[m])
+        print(ordered)
+
+        """
+        self.root = None
+        # insert root node
+        inserted = self.insert(response.data[mid].data)
+        left = response.data[:mid]
+        while left:
+            m = len(left) // 2
+            self.insert(response.data[m].data)
+            left = left[:m]
+        """ 
+
+        return DTO()
     def tree(self):
         return DTO()
 @struct
 class Node:
     data: int = 0
+    count: int = 1
     parent: object = None
     left: object = None
     right: object = None
     def __str__(self):
         return f"Node(data={self.data}, left={self.left}, right={self.right})"
-
 @struct
 class DTO:
     success: bool = False
@@ -163,7 +229,6 @@ class DTO:
     @property
     def message(self):
         return '\n'.join(self.messages)
-
 def parse(dto):
     response = DTO()
     for d in dto.data:
@@ -175,8 +240,8 @@ def parse(dto):
     if not response.success:
         response.messages.append("No valid arguments parsed")
     return response
-
 def main():
+    """TODO: cache last result only"""
     tree = Tree()
     while 1:
         action, *args = input('>>> ').split(' ')
