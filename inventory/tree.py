@@ -107,7 +107,7 @@ class Tree(object):
             traversal = self.inorder
         elif style == 2:
             traversal = self.postorder
-        return response()
+        return traversal()
     def inorder(self):
         dto = DTO()
         if not self.root:
@@ -140,7 +140,6 @@ class Tree(object):
             dto.success = False
             dto.messages.append(f"Tree is empty. No nodes to traverse.")
             return dto
-
         ordered = []
         nodes = [self.root]
         while nodes:
@@ -162,8 +161,26 @@ class Tree(object):
             dto.messages.append(f"Tree is empty. No nodes to traverse.")
             return dto
         ordered = []
+        nodes = []
         node = self.root
         exhausted = False
+        while not exhausted:
+            while node:
+                if node.right:
+                    nodes.append(node.right)
+                nodes.append(node)
+                node = node.left
+            node = nodes.pop()
+            if node.right and nodes[-1] == node.right:
+                nodes.pop()
+                nodes.append(node)
+                node = node.right
+            else:
+                ordered.append(str(node.data))
+                node = None
+            if not nodes:
+                exhausted = True
+        """
         nodes = [self.root]
         while nodes:
             node = nodes.pop()
@@ -172,8 +189,12 @@ class Tree(object):
                 nodes.append(node.left)
             if node.right:
                 nodes.append(node.right)
-        dto.data = ordered[::-1]
+        """
         dto.success = bool(ordered)
+        if dto.success:
+            dto.data = ordered[::-1]
+            dto.messages.append(" ".join(str(d) for d in ordered))
+
         return dto
     def balance(self):
         dto = DTO()
@@ -209,9 +230,9 @@ class Tree(object):
             left = left[:m]
         """ 
 
-        return DTO()
+        return DTO.todo()
     def tree(self):
-        return DTO()
+        return DTO.todo()
 @struct
 class Node:
     data: int = 0
@@ -229,6 +250,9 @@ class DTO:
     @property
     def message(self):
         return '\n'.join(self.messages)
+    @classmethod:
+    def todo(cls):
+        return cls(messages=["Not yet implemented"])
 def parse(dto):
     response = DTO()
     for d in dto.data:
