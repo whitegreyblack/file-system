@@ -8,6 +8,7 @@ parses text or file input into tree commands
 space = ' ' 
 numeric = set('1234567890')
 alpha = set('abcdefghijklmnopqrstuvwxyz')
+
 class Interpreter(object):
     def __init__(self, text):
         self.text = text
@@ -46,6 +47,7 @@ class Interpreter(object):
                     return None
                 return self.text[beg:self.pos+1]
         return 'EOF'
+
 if __name__ == "__main__":
     i = Interpreter(input('>>> '))
     print(i.next_token())

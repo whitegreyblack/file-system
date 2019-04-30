@@ -47,28 +47,6 @@ class ActionToken:
     text: str
     type: str
 
-# TODO: ultimate objective is to get tree.py to accept input insert random 100
-numeric = set('1234567890')
-alpha = set('abcdefghijklmnopqrstuvwxyz')
-class Interpreter(object):
-    def __init__(self, text):
-        self.text = text
-        self.pos = 0
-        self.current_token = None
-        self.current_char = self.text[self.pos]
-
-    def next_token(self):
-        while self.current_char is not None:
-            if self.current_char is ' ':
-                while self.current_char is not None and self.current_char is ' '
-                    self.pos += 1
-                    if self.pos <= len(self.text) - 1:
-                        self.current_char = self.text[self.pos]
-                    else:
-                        self.current_char = None
-            if self.current_char in alpha:
-                pass 
-
 class PrefixTree:
     pass
 

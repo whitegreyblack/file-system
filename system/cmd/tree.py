@@ -38,6 +38,7 @@ def tree(startnode:object, args=None) -> str:
     # start node, element count, depth, size of directory, branch prefix
     stack = [(startnode, 0, 0, 1, Branch.Empty)]
     while stack:
+        # TODO: refactor and use better variables
         (f, i, d, s, p), *stack = stack
         isfolder = isinstance(f, Folder)
         deep = d > 0
@@ -59,12 +60,14 @@ def tree(startnode:object, args=None) -> str:
             nid = f"{f.folder_id:2}"
             cid = f"{f.child_directory_id:2}"
             ref = ""
+            follow = ""
         else:
             files += 1
             # file specific formatting
             nid = f"{f.file_id:2}"
             cid = f"{'$':>2}"
-            ref = f" => {f.reference}"
+            follow = " => "
+            ref = f"{f.reference}"
         pid = f"{f.parent_directory_id:>2}"
         # non-specific formatting
         branch = ""
@@ -75,11 +78,18 @@ def tree(startnode:object, args=None) -> str:
         output = None
         if args:
             colorized = check(TreeArgs.Color, args)
-            if colorized and isfolder:
-                output = f"{p}{branch}{Fore.BLUE}{f.name}{Style.RESET_ALL + ' ' + Back.BLACK}{ref}"
-
+            if colorized:
+                b = branch
+                n = f.name
+                end = Style.RESET_ALL
+                if isfolder:
+                    fg = Fore.BLUE
+                    output = f"{p}{b}{fg}{n}{end}"
+                else:
+                    fg = Fore.GREEN
+                    output = f"{p}{b}{n}{follow}{fg}{ref}{end}"
         if not output:
-            output =  f"{p}{branch}{f.name}{ref}"
+            output =  f"{p}{branch}{f.name}{follow}{ref}"
         yield output        
         if not stack:
             break
@@ -99,15 +109,6 @@ def main(filepath:str, color:bool):
 
     for f in tree(system.root, args=args):
         print(f)
-    print('now oclor')
-    from pygments import highlight
-    from pygments.lexers import Python3Lexer
-    from pygments.formatters import TerminalFormatter, Terminal256Formatter
-    print(highlight("print('Jellow')", Python3Lexer(), TerminalFormatter()))
-    print(highlight("print('Jellow')", Python3Lexer(), Terminal256Formatter()))
-    sys.stdout.write(highlight("print('Jellow')", Python3Lexer(), TerminalFormatter()))
-    outfile = colorama.initialise.wrap_stream(
-                outfile, convert=None, strip=None, autoreset=False, wrap=True)
                 
 if __name__ == "__main__":
     from colorama import init
