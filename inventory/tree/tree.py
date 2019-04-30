@@ -1,25 +1,31 @@
 # tree.py
 
-from dataclasses import dataclass as struct
-from dataclasses import field
-
-
-class Branch(object):
-    Edge = "├──"
-    Line = "│  "
-    Corner = "└──"
-    Blank = "   "
-    Empty = ""
+from models import Branch, DTO, Node
+import random
 
 class Tree(object):
-    actions = set('insert balance delete count paint find traverse tree inorder preorder postorder'.split())
+    # actions = set('random new insert balance delete count paint find traverse tree inorder preorder postorder'.split())
     def __init__(self):
         self.root = None
+
     def __str__(self):
         data = None
         if self.root:
             data = self.root.data
         return f"Tree(root={data})"
+
+    def new(self):
+        self.root = None 
+
+    def random(self, x):
+        l = list(range(x))
+        random.shuffle(l)
+        return DTO(success=True, data=l)
+
+    def randrange(self, start, end):
+        self.rand_beg = start
+        self.rand_end = end + 1
+
     def count(self):
         dto = DTO()
         if not self.root:
@@ -36,6 +42,7 @@ class Tree(object):
         dto.success = True
         dto.messages.append(f"Number of nodes in tree: {count}")
         return dto
+
     def find(self, x):
         dto = DTO()
         if not self.root:
@@ -56,6 +63,7 @@ class Tree(object):
         dto.success = False
         dto.messages.append(f"{x} is not in the tree")
         return dto
+
     def insert(self, x):
         """TODO: implement balancing after insert"""
         dto = DTO()
@@ -95,6 +103,7 @@ class Tree(object):
                     dto.messages.append(f"Right is not empty. Setting right as current node.")
         dto.success = True
         return dto
+
     def traverse(self, style=1):
         dto = DTO()
         if not self.root:
@@ -108,6 +117,7 @@ class Tree(object):
         elif style == 2:
             traversal = self.postorder
         return traversal()
+
     def inorder(self):
         dto = DTO()
         if not self.root:
@@ -125,7 +135,7 @@ class Tree(object):
             else:
                 if nodes:
                     node = nodes.pop()
-                    ordered.append(node)
+                    ordered.append(node.data)
                     node = node.right
                 else:
                     exhausted = True
@@ -134,6 +144,7 @@ class Tree(object):
             dto.data = ordered
             dto.messages.append(" ".join(str(d.data) for d in ordered))
         return dto
+
     def preorder(self):
         dto = DTO()
         if not self.root:
@@ -144,7 +155,7 @@ class Tree(object):
         nodes = [self.root]
         while nodes:
             node = nodes.pop(0)
-            ordered.append(str(node.data))
+            ordered.append(node.data)
             if node.left:
                 nodes.append(node.left)
             if node.right:
@@ -154,6 +165,7 @@ class Tree(object):
             dto.data = ordered
             dto.messages.append(" ".join(str(d) for d in ordered))
         return dto
+
     def postorder(self):
         dto = DTO()
         if not self.root:
@@ -176,26 +188,16 @@ class Tree(object):
                 nodes.append(node)
                 node = node.right
             else:
-                ordered.append(str(node.data))
+                ordered.append(node.data)
                 node = None
             if not nodes:
                 exhausted = True
-        """
-        nodes = [self.root]
-        while nodes:
-            node = nodes.pop()
-            ordered.append(str(node.data))
-            if node.left:
-                nodes.append(node.left)
-            if node.right:
-                nodes.append(node.right)
-        """
         dto.success = bool(ordered)
         if dto.success:
             dto.data = ordered[::-1]
             dto.messages.append(" ".join(str(d) for d in ordered))
-
         return dto
+
     def balance(self):
         dto = DTO()
         if not self.root:
@@ -229,69 +231,41 @@ class Tree(object):
             self.insert(response.data[m].data)
             left = left[:m]
         """ 
-
         return DTO.todo()
+
     def tree(self):
-        return DTO.todo()
-@struct
-class Node:
-    data: int = 0
-    count: int = 1
-    parent: object = None
-    left: object = None
-    right: object = None
-    def __str__(self):
-        return f"Node(data={self.data}, left={self.left}, right={self.right})"
-@struct
-class DTO:
-    success: bool = False
-    data: list = field(default_factory=lambda: [])
-    messages: list = field(default_factory=lambda: [])
-    @property
-    def message(self):
-        return '\n'.join(self.messages)
-    @classmethod:
-    def todo(cls):
-        return cls(messages=["Not yet implemented"])
-def parse(dto):
-    response = DTO()
-    for d in dto.data:
-        try:
-            response.data.append(int(d.strip()))
-        except ValueError:
-            response.messages.append("Error converting {d} to int")
-    response.success = bool(len(response.data))
-    if not response.success:
-        response.messages.append("No valid arguments parsed")
-    return response
-def main():
-    """TODO: cache last result only"""
-    tree = Tree()
-    while 1:
-        action, *args = input('>>> ').split(' ')
-        if action == 'exit':
-            break
-        valid_action = action in Tree.actions # make sure command is valid
-        valid_method = hasattr(Tree, action) # make sure it's implemented
-        if not (valid_action and valid_method):
-            print("Command not found")
-            continue
-        command = getattr(tree, action)
-        if args:
-            request = DTO(data=args)
-            response = parse(request)
-            if response.message:
-                print(response.message)
-            if not response.success:
-                continue
-            for x in response.data:
-                response = command(x)
-                if response.messages:
-                    print(response.message)
-        else:
-            response = command()
-            if response.messages:
-                print(response.message) 
+        dto = DTO()
+        if not self.root:
+            dto.success = False
+            dto.messages.append("None")
+            return dto
+        depth = 0
+        count, leaves = 0, 0
+        nodes = [(self.root, True, depth, Branch.Empty)]
+        while nodes:
+            (node, last, depth, prefix), *nodes = nodes
+            count += 1
+            if not node.leaf:
+                prefix_add = ""
+                if depth > 0:
+                    prefix_add = Branch.Blank if last else Branch.Line
+                if node.left and node.right:
+                    nodes.insert(0, (node.left, True, depth + 1, prefix + prefix_add))
+                    nodes.insert(0, (node.right, False, depth + 1, prefix + prefix_add))
+                elif node.right:
+                    nodes.insert(0, (node.right, True, depth + 1, prefix + prefix_add))
+                else:
+                    nodes.insert(0, (node.left, True, depth + 1, prefix + prefix_add))
+            else:
+                leaves += 1
+            branch = ""
+            if depth > 0:
+                branch = Branch.Corner if last else Branch.Edge
+            dto.messages.append(f"{prefix}{branch}{node.data}")
+            if not nodes:
+                break
+        dto.messages.append(f"Nodes: {count}, Leaves: {leaves}")
+        return dto
 
-if __name__ == "__main__":
-    main()
+Tree.actions = set(fn for fn in dir(Tree) if callable(getattr(Tree, fn)) and not fn.startswith('__'))
+
