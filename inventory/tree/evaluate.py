@@ -78,6 +78,11 @@ eval:
     print(t.tree())
     t.balance()
     t.tree()
+
+Insert syntax:
+    insert 0...9
+    insert random 100
+    insert 0 1 2 3
 """
 
 def evaluate(tokens):

@@ -4,7 +4,6 @@ from models import Branch, DTO, Node
 import random
 
 class Tree(object):
-    # actions = set('random new insert balance delete count paint find traverse tree inorder preorder postorder'.split())
     def __init__(self):
         self.root = None
 
@@ -16,6 +15,40 @@ class Tree(object):
 
     def new(self):
         self.root = None 
+        return DTO(messages=["Tree was cut down"], success=True)
+
+    def cut(self, x):
+        dto = DTO()
+        response = self.find(x)
+        dto.extend(response)
+        if not dto.success:
+            dto.messages.append(f"Aborting cut.")
+            return dto
+        # it is known now that node exists. cut it out
+        if x == self.root.data:
+            response = self.new()
+            dto.extend(response)
+            return dto
+        temp = self.root
+        while temp:
+            if x == temp.data:
+                temp = None
+            elif x < temp.data:
+                if temp.left and temp.left.data != x:
+                    temp = temp.left
+                else:
+                    temp.left = None
+                    temp = temp.left
+            else:
+                if temp.right and temp.right.data != x:
+                    temp = temp.right
+                else:
+                    temp.right = None
+                    temp = temp.right
+
+        dto.messages.append(f"Cutting branch.")
+        dto.success = not self.find(x).success
+        return dto
 
     def random(self, x):
         l = list(range(x))
@@ -142,7 +175,7 @@ class Tree(object):
         dto.success = bool(ordered)
         if dto.success:
             dto.data = ordered
-            dto.messages.append(" ".join(str(d.data) for d in ordered))
+            dto.messages.append(" ".join(str(d) for d in ordered))
         return dto
 
     def preorder(self):
@@ -197,51 +230,65 @@ class Tree(object):
             dto.data = ordered[::-1]
             dto.messages.append(" ".join(str(d) for d in ordered))
         return dto
+    
+    def balanced(self):
+        return False
 
-    def balance(self):
+    def balance(self, node=None):
         dto = DTO()
         if not self.root:
             dto.success = False
             dto.messages.append(f"Tree is empty. Cannot balance empty tree.")
             return dto
+        if self.balanced():
+            dto.success = False
+            dto.messages.append(f"Tree is already balanced. Returning early")
+            return dto
         response = self.inorder()
         if not response.success:
-            return response
-        self.root = None
-        l, m, r = 0, len(response.data) // 2, len(response.data)
-        nodes = [response.data[m]]
+            dto.message.append(f"Inorder returned unsuccessful. Exitting balance early")
+            return dto
+        # don't clear out tree yet. need to find the correct ordering from data
+        # nodes = [response.data[m]] # holds correct ordering for insertion
         ordered = []
-        while nodes:
-            node = nodes.pop(0)
-            print(node)
-            self.insert(node.data)
-            left = response.data[l:m]
+        slices = [response.data]
+        while slices:
+            nodes = slices.pop(0)
+            m = len(nodes) // 2
+            ordered.append(nodes[m])
+            left, right = nodes[:m], nodes[m+1:]
             if left:
-                l, m, r = 0, len(left) // 2, len(left)
-                nodes.append(response.data[m])
-        print(ordered)
+                slices.append(left)
+            if right:
+                slices.append(right)
+        # now clear out root
+        self.new()
+        for i in ordered:
+            response = self.insert(i)
+            dto.messages.extend(response.messages)
 
-        """
-        self.root = None
-        # insert root node
-        inserted = self.insert(response.data[mid].data)
-        left = response.data[:mid]
-        while left:
-            m = len(left) // 2
-            self.insert(response.data[m].data)
-            left = left[:m]
-        """ 
-        return DTO.todo()
+        dto.data = ordered
+        dto.success = bool(ordered)
+        dto.messages.append(' '.join(str(d) for d in ordered))
+        return dto
 
-    def tree(self):
+    def tree(self, node=None):
         dto = DTO()
         if not self.root:
             dto.success = False
             dto.messages.append("None")
             return dto
+        if node:
+            response = self.find(node)
+            if not response.success:
+                dto.extend(response)
+                return dto
+            node = response.data.pop()
+        else:
+            node = self.root
         depth = 0
         count, leaves = 0, 0
-        nodes = [(self.root, True, depth, Branch.Empty)]
+        nodes = [(node, True, depth, Branch.Empty)]
         while nodes:
             (node, last, depth, prefix), *nodes = nodes
             count += 1

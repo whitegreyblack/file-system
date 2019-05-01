@@ -38,6 +38,11 @@ class DTO:
     @property
     def message(self):
         return '\n'.join(self.messages)
+    def extend(self, other):
+        if not isinstance(other, DTO):
+            raise TypeError("Cannot extend DTO with a non-DTO object")
+        self.success = other.success
+        self.messages.extend(other.messages)
     @classmethod
     def todo(cls):
         return cls(messages=["Not yet implemented"])
