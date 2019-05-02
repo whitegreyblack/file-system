@@ -5,7 +5,10 @@ Evaluates typed tokens from interpret.py
 """
 
 from dataclasses import dataclass as struct
-from interpret import interpret, LETTER, NUMBER
+from interpret import LETTER, NUMBER, tokenize
+from models import DTO
+from repl import user_input
+import difflib
 
 @struct
 class Statement:
@@ -86,17 +89,29 @@ Insert syntax:
 """
 
 def evaluate(tokens):
+    dto = DTO()
     while tokens:
         token = tokens.pop(0)
         if token.type == LETTER:
             if token.text in Tree.actions:
-                print('action: ', token.text)
+                dto.messages.append(f"action: {token.text}")
             else:
-                print('invalid action: ', token.text)
+                dto.messages.append(f"eval: '{token.text}' is not a valid command. See 'eval --help'.")
+                close_match = difflib.get_close_matches(token.text, Tree.actions)
+                if close_match:
+                    dto.messages.append(f"\nThe most similar command is:\n\t{close_match.pop()}")
+                break
         else:
-            print('arg: ', token.text)
-    return NotImplemented
+            dto.messages.append(f"arg: {token.text}")
+    dto.success = True
+    return dto
+
+def handle_input(user_input):
+    output = []
+    tokens = tokenize(user_input)
+    response = evaluate(tokens)
+    output.append(response.message)
+    return output
 
 if __name__ == "__main__":
-    tokens = interpret(input(">>> "))
-    print(evaluate(tokens))
+    user_input(fn=handle_input)

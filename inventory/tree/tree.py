@@ -276,7 +276,7 @@ class Tree(object):
         dto = DTO()
         if not self.root:
             dto.success = False
-            dto.messages.append("None")
+            dto.messages.append("Tree is empty")
             return dto
         if node:
             response = self.find(node)
@@ -315,4 +315,7 @@ class Tree(object):
         return dto
 
 Tree.actions = set(fn for fn in dir(Tree) if callable(getattr(Tree, fn)) and not fn.startswith('__'))
+
+if __name__ == "__main__":
+    print("Usage: py .")
 

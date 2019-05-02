@@ -4,10 +4,25 @@
 parses text or file input into tree commands
 """
 
-# TODO: ultimate objective is to get tree.py to accept input insert random 100
+# TODO: ultimate objective is to get tree.py to accept inputs:
+#           insert random 100
+#           insert 0..100 || insert 0...100?
 space = ' ' 
-numeric = set('1234567890')
+numeric = set('1234567890.')
 alpha = set('abcdefghijklmnopqrstuvwxyz')
+
+class TOKEN_TYPES:
+    WORD = 'WORD'                # action, insert
+    FLOAT = 'FLOAT'              # 1.0, 1.01, .01
+    INTEGER = 'INTEGER'          # 1, 12, 123
+    RANGE_IN = 'RANGE_INCLUSIVE' # '..'
+    RANGE_EX = 'RANGE_EXCLUSIVE' # '...'
+
+class Operators(object):
+    OP_PLUS = '+'
+    OP_MINUS = '-'
+    OP_RANGE_IN = '..'
+    OP_RANGE_EX = '...'
 
 class Interpreter(object):
     def __init__(self, text):
@@ -51,3 +66,4 @@ class Interpreter(object):
 if __name__ == "__main__":
     i = Interpreter(input('>>> '))
     print(i.next_token())
+

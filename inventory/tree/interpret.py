@@ -17,6 +17,7 @@ Analysis:
 """
 
 from dataclasses import dataclass as struct
+from repl import user_input
 
 @struct
 class Token:
@@ -54,7 +55,7 @@ def invalid_error(text, pos):
     {text}
     {' ' * pos}^"""[1:]
 
-def interpret(text) -> list:
+def tokenize(text) -> list:
     """
     Parses input and returns valid input as typed tokens
     """
@@ -107,7 +108,38 @@ def interpret(text) -> list:
             return []
     return tokens
 
+def interpret(tokens) -> object:
+    """
+    Reads tokens to create a simple abstract syntax tree
+    """
+    if not tokens:
+        return ""
+    while tokens:
+        token, *tokens = tokens
+        if token.type is LETTER:
+            # function call
+            ts = tokens
+            while tokens:
+                t, *tokens = tokens
+                if t.type is LETTER:
+                    ...
+                break
+        break
+    return NotImplemented
+
+def handle_input(user_input):
+    """
+    function hook to pass into repl loop
+    """
+    output = []
+    tokens = tokenize(user_input)
+    for token in tokens:
+        output.append(f"{token.text} {token.type}")
+    interpreted = interpret(tokens)
+    if interpreted:
+        output.append(str(interpreted))
+    return output
+
 if __name__ == "__main__":
-    for token in interpret(input('>>> ')):
-        print(token.text, token.type)
+    user_input(fn=handle_input)
 
