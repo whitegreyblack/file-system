@@ -1,0 +1,95 @@
+# showcases what should happen in inventory
+# Use Dota2 items to test against
+Given a list of items
+  +--------------------------------------------------+
+  |                                                  |
+  | [Item A] [Item B] [Item C] [Item D] ... [Item N] |
+  |                                                  |
+  +--------------------------------------------------+
+Determine if the items in inventory can be used to create a specific recipe
+  Ex. Simple item
+  <Stick> | -> <Branch> <Branch>
+  If i = [Branch], r = Stick -> No
+  If i = [Branch, Branch], r = Stick -> Yes
+
+  Ex. Complex item
+    <Staff> | -> <Stick> <Stick>
+            | -> <Stick> <Branch> <Branch>
+            | -> <Branch> <Branch> <Branch> <Branch>
+  If i = [Stick, Branch], r = Staff -> No
+  If i = [Stick, Stick], r = Staff -> Yes
+
+  Ex. Multiple children
+    <Soup> | -> <Water> <Meat> <Bowl>
+           | -> <Water> <Meat> <Log>
+
+Implmentation:
+  Each item should have a tree?graph? for the items that make it up
+  Ex:
+       Stick
+       /   \
+  Branch   Branch
+
+                 Staff
+                 /   \
+                /     \
+	       /       \
+	      /         \
+	     /           \
+         Stick           Stick
+         /   \           /   \
+    Branch   Branch Branch   Branch
+
+  A recipe can be made up of the sum of its ingredients but only from a 
+  specific level in the tree. 
+  Take the recipe tree for a staff:
+    It be made up of a combination of 2 sticks, 1 stick, 2 branches, 
+    or 4 branches.
+  The tree can have more than 2 child nodes.
+  Ex.
+           Soup
+          / |  \
+         /  |   \
+        /   |    \
+    Water  Bowl  Meat
+            |
+	   Log
+
+  The algorithm should take all n child nodes and return a specific level that 
+  matches whatever items are used in the inventory.
+  This could return a very large permuation list however.
+  Say if staff took in an additional component <Gem> along with two sticks and
+  <Gem> took a recipe of 2 gem dusts:
+
+  Wizard Staff | -> <Gem> <Stick> <Stick>
+               | -> <Gem> <Stick> <Branch> <Branch>
+	       | -> <Gem> <Branch> <Branch> <Branch> <Branch>
+	       | -> <Gem Dust> <Gem Dust> <Stick> <Stick> 
+	       | -> <Gem Dust> <Gem Dust> <Stick> <Branch> <Branch>
+	       | -> <Gem Dust> <Gem Dust> <Branch> <Branch> <Branch> <Branch>
+
+  The basic ingredient list could result in the very long component lists.
+  We can limit the trees to take in only the base ingredients instead of
+  permutations of ingredients. ie <Staff> would be created ONLY with 2 Sticks.
+
+  The tree can be simplified if we take in count of unique ingredients instead
+  individual components.
+  Ex.
+        Stick                   Stick
+        /   \         ->          |
+   Branch   Branch         Branch (count=2)
+
+   This would also make the staff recipe smaller
+       
+        Staff
+	  |
+    Stick (count=2)
+          |
+    Branch(count=4)
+
+  But we wouldn't be able to keep all 3 permutations with this approach. So
+  probably not the best way to implement the trees.
+
+  So the most simpliest approach would be for the user to craft recipes only
+  using the tree children where level = 1.
+
