@@ -1,6 +1,8 @@
 # actions.py
+
 from models import *
 from utils import format_words
+
 def insert(item, database, save):
     name = format_words(item)
     if item not in database:
@@ -17,11 +19,12 @@ def add(dto, *args) -> object:
     db_arg = args.pop(0)
     db = dto.databases.get(db_arg, None)
     if db is None:
-        dto.messages.append(
-            f"Syntax error: Invalid database provided while parsing add command: got None")
+        dto.messages.append("""
+Syntax error: Invalid database provided while parsing add command: got None""")
         return dto
     if not args:
-        dto.messages.append("Syntax error: No arguments supplied while parsing add command")
+        dto.messages.append("""
+Syntax error: No arguments supplied while parsing add command""")
         return dto
     while args:
         i_arg = args.pop(0)
@@ -48,7 +51,8 @@ def show(dto, *args) -> object:
     return dto
 
 def leave(dto, *args) -> object:
-    dto.messages.append("User called exit program command. Prepare to stop application.")
+    dto.messages.append("""
+User called exit program command. Stopping application.""")
     dto.early_exit = True
     return dto
 
